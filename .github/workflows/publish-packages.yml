@@ -71,11 +71,8 @@ jobs:
         working-directory: packages/search-utils
         run: python -m build
 
-      - name: Publish to GitHub Packages
+      - name: Publish to PyPI
         working-directory: packages/search-utils
-        env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          python -m twine upload dist/* \
-            --repository-url https://python.pkg.github.com/paulkokos/project-management-dashboard
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist/
