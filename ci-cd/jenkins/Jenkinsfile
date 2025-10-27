@@ -1,0 +1,121 @@
+pipeline {
+    agent any
+
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+        timeout(time: 1, unit: 'HOURS')
+        timestamps()
+    }
+
+    environment {
+        DOCKER_REGISTRY = credentials('docker-registry-url')
+        DOCKER_CREDENTIALS = credentials('docker-registry-credentials')
+        REPO_NAME = 'project-management-dashboard'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Backend Tests') {
+            steps {
+                dir('backend') {
+                    sh '''
+                        python -m venv venv
+                        . venv/bin/activate
+                        pip install -r requirements.txt
+                        pip install pytest pytest-cov pytest-django
+                        pytest --cov=projects --cov=core --cov-report=xml
+                    '''
+                }
+            }
+            post {
+                always {
+                    junit 'backend/test-results/**/*.xml'
+                    publishCoverage adapters: [coberturaAdapter('backend/coverage.xml')]
+                }
+            }
+        }
+
+        stage('Frontend Tests') {
+            steps {
+                dir('frontend') {
+                    sh '''
+                        npm ci
+                        npm run lint
+                        npm run test
+                    '''
+                }
+            }
+        }
+
+        stage('Build Docker Images') {
+            steps {
+                sh '''
+                    echo "${DOCKER_CREDENTIALS_PSW}" | docker login -u "${DOCKER_CREDENTIALS_USR}" --password-stdin "${DOCKER_REGISTRY}"
+
+                    # Build backend
+                    docker build -f deployment/docker/Dockerfile.backend -t ${DOCKER_REGISTRY}/${REPO_NAME}-backend:${BUILD_NUMBER} .
+                    docker tag ${DOCKER_REGISTRY}/${REPO_NAME}-backend:${BUILD_NUMBER} ${DOCKER_REGISTRY}/${REPO_NAME}-backend:latest
+
+                    # Build frontend
+                    docker build -f deployment/docker/Dockerfile.frontend -t ${DOCKER_REGISTRY}/${REPO_NAME}-frontend:${BUILD_NUMBER} .
+                    docker tag ${DOCKER_REGISTRY}/${REPO_NAME}-frontend:${BUILD_NUMBER} ${DOCKER_REGISTRY}/${REPO_NAME}-frontend:latest
+                '''
+            }
+        }
+
+        stage('Push Docker Images') {
+            when {
+                branch 'main'
+            }
+            steps {
+                sh '''
+                    docker push ${DOCKER_REGISTRY}/${REPO_NAME}-backend:${BUILD_NUMBER}
+                    docker push ${DOCKER_REGISTRY}/${REPO_NAME}-backend:latest
+                    docker push ${DOCKER_REGISTRY}/${REPO_NAME}-frontend:${BUILD_NUMBER}
+                    docker push ${DOCKER_REGISTRY}/${REPO_NAME}-frontend:latest
+                '''
+            }
+        }
+
+        stage('Deploy to Staging') {
+            when {
+                branch 'main'
+            }
+            steps {
+                sh '''
+                    # Deploy to staging environment
+                    # Use Kubernetes, Docker Compose, or your deployment tool
+                    docker-compose -f deployment/docker/docker-compose.staging.yml pull
+                    docker-compose -f deployment/docker/docker-compose.staging.yml up -d
+                '''
+            }
+        }
+
+        stage('Health Check') {
+            steps {
+                sh '''
+                    sleep 10
+                    curl -f http://localhost/health || exit 1
+                    curl -f http://localhost/api/health/ || exit 1
+                '''
+            }
+        }
+    }
+
+    post {
+        always {
+            cleanWs()
+        }
+        success {
+            echo 'Pipeline succeeded!'
+        }
+        failure {
+            echo 'Pipeline failed!'
+        }
+    }
+}

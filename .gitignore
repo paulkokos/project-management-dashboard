@@ -1,0 +1,72 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+venv/
+ENV/
+env/
+.venv
+
+# Django
+*.log
+local_settings.py
+/static/
+staticfiles/
+db.sqlite3
+*.pot
+
+# Testing & Coverage
+.coverage
+.coverage.*
+htmlcov/
+coverage/
+.pytest_cache/
+.cache/
+*.cover
+.hypothesis/
+.tox/
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+dist/
+build/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Docker
+.dockerignore
+
+# OS
+*.pyc
+.DS_Store
+Thumbs.db

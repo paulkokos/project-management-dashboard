@@ -1,0 +1,33 @@
+# Backend Development Dockerfile
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Configure apt for better network reliability
+RUN echo 'Acquire::http::Timeout "30"; Acquire::https::Timeout "30"; Acquire::ftp::Timeout "30"; Acquire::http::ConnectionAttemptDelayMsec "1000";' > /etc/apt/apt.conf.d/99-network-timeout
+
+# Install system dependencies with retry logic
+RUN for i in 1 2 3; do apt-get update && apt-get install -y \
+    gcc \
+    postgresql-client \
+    curl \
+    && rm -rf /var/lib/apt/lists/* && break || ([ $i -lt 3 ] && sleep 10); done
+
+# Copy requirements
+COPY backend/requirements.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY backend/ .
+
+# Expose port
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:8000/api/health/ || exit 1
+
+# Run development server
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]

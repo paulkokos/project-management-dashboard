@@ -1,0 +1,40 @@
+# Backend Dockerfile with timeout optimizations
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies with retry logic
+RUN for i in 1 2 3; do apt-get update && apt-get install -y \
+    gcc \
+    postgresql-client \
+    curl \
+    && rm -rf /var/lib/apt/lists/* && break || ([ $i -lt 3 ] && sleep 5); done
+
+# Install Python dependencies with extended timeout and retry
+COPY backend/requirements.txt .
+RUN for i in 1 2 3; do pip install --no-cache-dir --default-timeout 1000 -r requirements.txt && break || ([ $i -lt 3 ] && sleep 5); done
+
+# Copy application code
+COPY backend/ .
+
+# Create non-root user and set permissions (but don't switch yet)
+RUN useradd -m -u 1000 appuser && \
+    mkdir -p /app/staticfiles && \
+    chown -R appuser:appuser /app
+
+# Collect static files as root to ensure proper permissions
+RUN python manage.py collectstatic --noinput --clear 2>/dev/null || true && \
+    chown -R appuser:appuser /app/staticfiles
+
+# Switch to non-root user
+USER appuser
+
+# Expose port
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8000/api/health/ || exit 1
+
+# Run application
+CMD ["daphne", "-b", "0.0.0.0", "-p", "8000", "config.asgi:application"]

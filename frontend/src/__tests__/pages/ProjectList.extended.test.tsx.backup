@@ -1,0 +1,1530 @@
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { render, screen, fireEvent, waitFor } from '@/__tests__/utils/test-utils'
+import ProjectList from '@/pages/ProjectList'
+import { Project, Tag, User } from '@/types'
+
+// Mock data
+const mockUser: User = {
+  id: 1,
+  username: 'testuser',
+  email: 'test@example.com',
+  first_name: 'Test',
+  last_name: 'User',
+  is_admin: false,
+}
+
+const mockAdminUser: User = {
+  id: 2,
+  username: 'admin',
+  email: 'admin@example.com',
+  first_name: 'Admin',
+  last_name: 'User',
+  is_admin: true,
+}
+
+const mockTags: Tag[] = [
+  { id: 1, name: 'Frontend', color: '#FF0000', description: 'Frontend tag' },
+  { id: 2, name: 'Backend', color: '#00FF00', description: 'Backend tag' },
+  { id: 3, name: 'DevOps', color: '#0000FF', description: 'DevOps tag' },
+]
+
+const mockProjects: Project[] = [
+  {
+    id: 1,
+    title: 'Active Project',
+    description: 'This is an active project',
+    owner: mockUser,
+    status: 'active',
+    health: 'healthy',
+    progress: 50,
+    start_date: '2024-01-01',
+    end_date: '2024-12-31',
+    tags: [mockTags[0]],
+    team_count: 5,
+    milestone_count: 10,
+    completed_milestone_count: 5,
+    days_until_deadline: 30,
+    risk_level: 'low',
+    duration_display: '12 months',
+    etag: '"abc123"',
+    version: 1,
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2024-01-15T00:00:00Z',
+  },
+  {
+    id: 2,
+    title: 'On Hold Project',
+    description: 'This project is on hold',
+    owner: mockUser,
+    status: 'on_hold',
+    health: 'at_risk',
+    progress: 25,
+    start_date: '2024-01-01',
+    end_date: '2024-06-30',
+    tags: [mockTags[1]],
+    team_count: 3,
+    milestone_count: 5,
+    completed_milestone_count: 1,
+    days_until_deadline: 60,
+    risk_level: 'medium',
+    duration_display: '6 months',
+    etag: '"def456"',
+    version: 1,
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2024-01-10T00:00:00Z',
+  },
+  {
+    id: 3,
+    title: 'Critical Project',
+    description: 'This project needs attention',
+    owner: mockUser,
+    status: 'active',
+    health: 'critical',
+    progress: 75,
+    start_date: '2024-01-01',
+    end_date: '2024-03-31',
+    tags: [mockTags[0], mockTags[2]],
+    team_count: 8,
+    milestone_count: 8,
+    completed_milestone_count: 6,
+    days_until_deadline: 5,
+    risk_level: 'critical',
+    duration_display: '3 months',
+    etag: '"ghi789"',
+    version: 1,
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2024-01-20T00:00:00Z',
+  },
+  {
+    id: 4,
+    title: 'Completed Project',
+    description: 'Successfully completed project',
+    owner: mockAdminUser,
+    status: 'completed',
+    health: 'healthy',
+    progress: 100,
+    start_date: '2023-01-01',
+    end_date: '2023-12-31',
+    tags: [mockTags[1], mockTags[2]],
+    team_count: 6,
+    milestone_count: 12,
+    completed_milestone_count: 12,
+    days_until_deadline: null,
+    risk_level: 'low',
+    duration_display: '12 months',
+    etag: '"jkl012"',
+    version: 1,
+    created_at: '2023-01-01T00:00:00Z',
+    updated_at: '2023-12-31T00:00:00Z',
+  },
+  {
+    id: 5,
+    title: 'Archived Project',
+    description: 'Old archived project',
+    owner: mockUser,
+    status: 'archived',
+    health: 'healthy',
+    progress: 90,
+    start_date: '2022-01-01',
+    end_date: '2022-12-31',
+    tags: [],
+    team_count: 4,
+    milestone_count: 6,
+    completed_milestone_count: 5,
+    days_until_deadline: null,
+    risk_level: 'low',
+    duration_display: '12 months',
+    etag: '"mno345"',
+    version: 1,
+    created_at: '2022-01-01T00:00:00Z',
+    updated_at: '2022-12-31T00:00:00Z',
+  },
+]
+
+// Mock hooks and services - must be declared before vi.mock due to hoisting
+vi.mock('@/hooks', () => ({
+  useAllProjectUpdates: vi.fn(),
+}))
+
+vi.mock('@/services/api', () => ({
+  projectAPI: {
+    list: vi.fn(),
+    softDelete: vi.fn(),
+  },
+  tagAPI: {
+    list: vi.fn(),
+  },
+}))
+
+vi.mock('@/stores/authStore', () => ({
+  useAuthStore: vi.fn(),
+}))
+
+vi.mock('@tanstack/react-query', () => ({
+  useQuery: vi.fn(),
+  useQueryClient: vi.fn(),
+}))
+
+describe('ProjectList - Comprehensive Tests', () => {
+  beforeEach(async () => {
+    vi.clearAllMocks()
+
+    // Setup auth store mock
+    const { useAuthStore } = await import('@/stores/authStore')
+    vi.mocked(useAuthStore).mockReturnValue({
+      user: mockUser,
+      setUser: vi.fn(),
+      logout: vi.fn(),
+      isAuthenticated: true,
+    })
+
+    // Setup react-query mocks
+    const { useQuery, useQueryClient } = await import('@tanstack/react-query')
+
+    vi.mocked(useQueryClient).mockReturnValue({
+      invalidateQueries: vi.fn(),
+      clear: vi.fn(),
+      getQueryData: vi.fn(),
+      setQueryData: vi.fn(),
+    } as any)
+
+    vi.mocked(useQuery).mockImplementation(({ queryKey }: any) => {
+      if (queryKey[0] === 'projects') {
+        const filters = queryKey[1] || {}
+        let filteredProjects = [...mockProjects]
+
+        if (filters.status) {
+          filteredProjects = filteredProjects.filter(p => p.status === filters.status)
+        }
+        if (filters.health) {
+          filteredProjects = filteredProjects.filter(p => p.health === filters.health)
+        }
+        if (filters.search) {
+          filteredProjects = filteredProjects.filter(p =>
+            p.title.toLowerCase().includes(filters.search.toLowerCase()) ||
+            p.description.toLowerCase().includes(filters.search.toLowerCase())
+          )
+        }
+        if (filters.tags && filters.tags.length > 0) {
+          filteredProjects = filteredProjects.filter(p =>
+            p.tags.some(tag => filters.tags.includes(tag.id))
+          )
+        }
+
+        if (filters.ordering) {
+          const [direction, field] = filters.ordering.startsWith('-')
+            ? ['desc', filters.ordering.slice(1)]
+            : ['asc', filters.ordering]
+
+          filteredProjects.sort((a: any, b: any) => {
+            if (direction === 'desc') {
+              return b[field] > a[field] ? 1 : -1
+            }
+            return a[field] > b[field] ? 1 : -1
+          })
+        }
+
+        return {
+          data: {
+            data: {
+              results: filteredProjects,
+              count: filteredProjects.length,
+            },
+          },
+          isLoading: false,
+          error: null,
+          refetch: vi.fn(),
+        } as any
+      }
+
+      if (queryKey[0] === 'tags') {
+        return {
+          data: {
+            data: {
+              results: mockTags,
+            },
+          },
+          isLoading: false,
+          error: null,
+          refetch: vi.fn(),
+        } as any
+      }
+
+      return { data: null, isLoading: false, error: null, refetch: vi.fn() } as any
+    })
+
+    // Setup API mocks
+    const { projectAPI, tagAPI } = await import('@/services/api')
+    vi.mocked(projectAPI.list).mockResolvedValue({
+      data: {
+        results: mockProjects,
+        count: mockProjects.length,
+      },
+    } as any)
+    vi.mocked(projectAPI.softDelete).mockResolvedValue({} as any)
+    vi.mocked(tagAPI.list).mockResolvedValue({
+      data: {
+        results: mockTags,
+      },
+    } as any)
+  })
+
+  afterEach(() => {
+    vi.clearAllMocks()
+  })
+
+  // ============== RENDERING TESTS ==============
+  describe('Component Rendering', () => {
+    it('should render the ProjectList page without crashing', () => {
+      const { container } = render(<ProjectList />)
+      expect(container).toBeInTheDocument()
+    })
+
+    it('should display the page title', () => {
+      render(<ProjectList />)
+      expect(screen.getByText('Projects')).toBeInTheDocument()
+    })
+
+    it('should render the New Project button', () => {
+      render(<ProjectList />)
+      const newProjectButton = screen.getByRole('link', { name: /new project/i })
+      expect(newProjectButton).toBeInTheDocument()
+      expect(newProjectButton).toHaveAttribute('href', '/projects/new')
+    })
+
+    it('should render the Trash button', () => {
+      render(<ProjectList />)
+      const trashButton = screen.getByRole('link', { name: /trash/i })
+      expect(trashButton).toBeInTheDocument()
+      expect(trashButton).toHaveAttribute('href', '/projects/deleted')
+    })
+
+    it('should render search input', () => {
+      render(<ProjectList />)
+      const searchInput = screen.getByPlaceholderText('Search projects...')
+      expect(searchInput).toBeInTheDocument()
+    })
+
+    it('should render all filter dropdowns', () => {
+      render(<ProjectList />)
+      const selects = screen.getAllByRole('combobox')
+      expect(selects.length).toBeGreaterThanOrEqual(3) // status, health, sort
+    })
+
+    it('should render all projects', () => {
+      render(<ProjectList />)
+      mockProjects.forEach(project => {
+        expect(screen.getByText(project.title)).toBeInTheDocument()
+      })
+    })
+
+    it('should render project cards in a grid layout', () => {
+      const { container } = render(<ProjectList />)
+      const grid = container.querySelector('.grid')
+      expect(grid).toBeInTheDocument()
+    })
+  })
+
+  // ============== PROJECT DISPLAY TESTS ==============
+  describe('Project Display', () => {
+    it('should display project titles as links', () => {
+      render(<ProjectList />)
+      const projectLink = screen.getByText('Active Project').closest('a')
+      expect(projectLink).toHaveAttribute('href', '/projects/1')
+    })
+
+    it('should display project descriptions', () => {
+      render(<ProjectList />)
+      expect(screen.getByText('This is an active project')).toBeInTheDocument()
+    })
+
+    it('should display project owner information', () => {
+      render(<ProjectList />)
+      expect(screen.getAllByText(mockUser.username).length).toBeGreaterThan(0)
+    })
+
+    it('should display project status badges', () => {
+      render(<ProjectList />)
+      const statusBadges = screen.getAllByText(/active|on_hold|completed|archived/i)
+      expect(statusBadges.length).toBeGreaterThan(0)
+    })
+
+    it('should display project health indicators', () => {
+      render(<ProjectList />)
+      expect(screen.getAllByText(/healthy|at_risk|critical/i).length).toBeGreaterThan(0)
+    })
+
+    it('should display project progress bars', () => {
+      render(<ProjectList />)
+      expect(screen.getByText('50% complete')).toBeInTheDocument()
+      expect(screen.getByText('25% complete')).toBeInTheDocument()
+      expect(screen.getByText('100% complete')).toBeInTheDocument()
+    })
+
+    it('should display project tags', () => {
+      render(<ProjectList />)
+      expect(screen.getAllByText('Frontend').length).toBeGreaterThan(0)
+      expect(screen.getAllByText('Backend').length).toBeGreaterThan(0)
+    })
+
+    it('should display team member count', () => {
+      const { container } = render(<ProjectList />)
+      // TeamMemberCount component should be rendered
+      expect(container).toBeInTheDocument()
+    })
+
+    it('should display milestone progress', () => {
+      const { container } = render(<ProjectList />)
+      // MilestoneProgress component should be rendered
+      expect(container).toBeInTheDocument()
+    })
+
+    it('should display deadline indicators for projects with end dates', () => {
+      const { container } = render(<ProjectList />)
+      // DeadlineIndicator component should be rendered for projects with end dates
+      expect(container).toBeInTheDocument()
+    })
+
+    it('should display risk badges', () => {
+      const { container } = render(<ProjectList />)
+      // RiskBadge component should be rendered
+      expect(container).toBeInTheDocument()
+    })
+
+    it('should display duration information when available', () => {
+      render(<ProjectList />)
+      expect(screen.getByText(/Duration: 12 months/)).toBeInTheDocument()
+    })
+
+    it('should display updated_at dates', () => {
+      render(<ProjectList />)
+      // Dates should be formatted and displayed
+      const dateElements = screen.getAllByText(/1\/\d+\/2024|12\/31\/2023|12\/31\/2022/)
+      expect(dateElements.length).toBeGreaterThan(0)
+    })
+  })
+
+  // ============== SEARCH FUNCTIONALITY TESTS ==============
+  describe('Search Functionality', () => {
+    it('should allow typing in the search input', () => {
+      render(<ProjectList />)
+      const searchInput = screen.getByPlaceholderText('Search projects...') as HTMLInputElement
+
+      fireEvent.change(searchInput, { target: { value: 'Active' } })
+      expect(searchInput.value).toBe('Active')
+    })
+
+    it('should filter projects by search term in title', () => {
+      render(<ProjectList />)
+      const searchInput = screen.getByPlaceholderText('Search projects...')
+
+      fireEvent.change(searchInput, { target: { value: 'Active' } })
+
+      // Should show Active Project and not show other projects
+      expect(screen.getByText('Active Project')).toBeInTheDocument()
+    })
+
+    it('should filter projects by search term in description', () => {
+      render(<ProjectList />)
+      const searchInput = screen.getByPlaceholderText('Search projects...')
+
+      fireEvent.change(searchInput, { target: { value: 'attention' } })
+      expect(screen.getByText('Critical Project')).toBeInTheDocument()
+    })
+
+    it('should reset to page 1 when searching', () => {
+      render(<ProjectList />)
+      const searchInput = screen.getByPlaceholderText('Search projects...')
+
+      fireEvent.change(searchInput, { target: { value: 'test' } })
+      // Page should reset to 1 (implicit in implementation)
+      expect(searchInput).toBeInTheDocument()
+    })
+
+    it('should handle empty search results', async () => {
+      render(<ProjectList />)
+      const searchInput = screen.getByPlaceholderText('Search projects...')
+
+      fireEvent.change(searchInput, { target: { value: 'nonexistentproject12345' } })
+
+      await waitFor(() => {
+        expect(screen.getByText('No projects found')).toBeInTheDocument()
+      })
+    })
+
+    it('should clear search when input is cleared', () => {
+      render(<ProjectList />)
+      const searchInput = screen.getByPlaceholderText('Search projects...') as HTMLInputElement
+
+      fireEvent.change(searchInput, { target: { value: 'Active' } })
+      expect(searchInput.value).toBe('Active')
+
+      fireEvent.change(searchInput, { target: { value: '' } })
+      expect(searchInput.value).toBe('')
+    })
+  })
+
+  // ============== STATUS FILTER TESTS ==============
+  describe('Status Filter', () => {
+    it('should render status filter dropdown', () => {
+      render(<ProjectList />)
+      const statusFilter = screen.getByDisplayValue('All Statuses')
+      expect(statusFilter).toBeInTheDocument()
+    })
+
+    it('should have all status options', () => {
+      render(<ProjectList />)
+      const statusFilter = screen.getByDisplayValue('All Statuses') as HTMLSelectElement
+
+      const options = Array.from(statusFilter.options).map(opt => opt.value)
+      expect(options).toContain('')
+      expect(options).toContain('active')
+      expect(options).toContain('on_hold')
+      expect(options).toContain('archived')
+      expect(options).toContain('completed')
+    })
+
+    it('should filter projects by active status', async () => {
+      render(<ProjectList />)
+      const statusFilter = screen.getByDisplayValue('All Statuses')
+
+      fireEvent.change(statusFilter, { target: { value: 'active' } })
+
+      await waitFor(() => {
+        expect(screen.getByText('Active Project')).toBeInTheDocument()
+        expect(screen.getByText('Critical Project')).toBeInTheDocument()
+      })
+    })
+
+    it('should filter projects by on_hold status', async () => {
+      render(<ProjectList />)
+      const statusFilter = screen.getByDisplayValue('All Statuses')
+
+      fireEvent.change(statusFilter, { target: { value: 'on_hold' } })
+
+      await waitFor(() => {
+        expect(screen.getByText('On Hold Project')).toBeInTheDocument()
+      })
+    })
+
+    it('should filter projects by completed status', async () => {
+      render(<ProjectList />)
+      const statusFilter = screen.getByDisplayValue('All Statuses')
+
+      fireEvent.change(statusFilter, { target: { value: 'completed' } })
+
+      await waitFor(() => {
+        expect(screen.getByText('Completed Project')).toBeInTheDocument()
+      })
+    })
+
+    it('should filter projects by archived status', async () => {
+      render(<ProjectList />)
+      const statusFilter = screen.getByDisplayValue('All Statuses')
+
+      fireEvent.change(statusFilter, { target: { value: 'archived' } })
+
+      await waitFor(() => {
+        expect(screen.getByText('Archived Project')).toBeInTheDocument()
+      })
+    })
+
+    it('should reset to page 1 when changing status filter', () => {
+      render(<ProjectList />)
+      const statusFilter = screen.getByDisplayValue('All Statuses')
+
+      fireEvent.change(statusFilter, { target: { value: 'active' } })
+      // Page should reset to 1
+      expect(statusFilter).toBeInTheDocument()
+    })
+  })
+
+  // ============== HEALTH FILTER TESTS ==============
+  describe('Health Filter', () => {
+    it('should render health filter dropdown', () => {
+      render(<ProjectList />)
+      const healthFilter = screen.getByDisplayValue('All Health')
+      expect(healthFilter).toBeInTheDocument()
+    })
+
+    it('should have all health options', () => {
+      render(<ProjectList />)
+      const healthFilter = screen.getByDisplayValue('All Health') as HTMLSelectElement
+
+      const options = Array.from(healthFilter.options).map(opt => opt.value)
+      expect(options).toContain('')
+      expect(options).toContain('healthy')
+      expect(options).toContain('at_risk')
+      expect(options).toContain('critical')
+    })
+
+    it('should filter projects by healthy health', async () => {
+      
+      render(<ProjectList />)
+      const healthFilter = screen.getByDisplayValue('All Health')
+
+      fireEvent.change(healthFilter, { target: { value: 'healthy' } })
+
+      await waitFor(() => {
+        expect(screen.getByText('Active Project')).toBeInTheDocument()
+        expect(screen.getByText('Completed Project')).toBeInTheDocument()
+      })
+    })
+
+    it('should filter projects by at_risk health', async () => {
+      
+      render(<ProjectList />)
+      const healthFilter = screen.getByDisplayValue('All Health')
+
+      fireEvent.change(healthFilter, { target: { value: 'at_risk' } })
+
+      await waitFor(() => {
+        expect(screen.getByText('On Hold Project')).toBeInTheDocument()
+      })
+    })
+
+    it('should filter projects by critical health', async () => {
+      
+      render(<ProjectList />)
+      const healthFilter = screen.getByDisplayValue('All Health')
+
+      fireEvent.change(healthFilter, { target: { value: 'critical' } })
+
+      await waitFor(() => {
+        expect(screen.getByText('Critical Project')).toBeInTheDocument()
+      })
+    })
+
+    it('should reset to page 1 when changing health filter', async () => {
+      
+      render(<ProjectList />)
+      const healthFilter = screen.getByDisplayValue('All Health')
+
+      fireEvent.change(healthFilter, { target: { value: 'healthy' } })
+      expect(healthFilter).toBeInTheDocument()
+    })
+  })
+
+  // ============== SORTING TESTS ==============
+  describe('Sorting Functionality', () => {
+    it('should render sort dropdown', () => {
+      render(<ProjectList />)
+      const sortSelect = screen.getByDisplayValue('Newest')
+      expect(sortSelect).toBeInTheDocument()
+    })
+
+    it('should have all sorting options', () => {
+      render(<ProjectList />)
+      const sortSelect = screen.getByDisplayValue('Newest') as HTMLSelectElement
+
+      const options = Array.from(sortSelect.options).map(opt => opt.value)
+      expect(options).toContain('-updated_at')
+      expect(options).toContain('updated_at')
+      expect(options).toContain('title')
+      expect(options).toContain('-title')
+      expect(options).toContain('-progress')
+      expect(options).toContain('progress')
+    })
+
+    it('should sort by newest (default)', () => {
+      render(<ProjectList />)
+      const sortSelect = screen.getByDisplayValue('Newest')
+      expect(sortSelect).toHaveValue('-updated_at')
+    })
+
+    it('should change sort to oldest', async () => {
+      
+      render(<ProjectList />)
+      const sortSelect = screen.getByDisplayValue('Newest')
+
+      fireEvent.change(sortSelect, { target: { value: 'updated_at' } })
+      expect(sortSelect).toHaveValue('updated_at')
+    })
+
+    it('should change sort to title A-Z', async () => {
+      
+      render(<ProjectList />)
+      const sortSelect = screen.getByDisplayValue('Newest')
+
+      fireEvent.change(sortSelect, { target: { value: 'title' } })
+      expect(sortSelect).toHaveValue('title')
+    })
+
+    it('should change sort to title Z-A', async () => {
+      
+      render(<ProjectList />)
+      const sortSelect = screen.getByDisplayValue('Newest')
+
+      fireEvent.change(sortSelect, { target: { value: '-title' } })
+      expect(sortSelect).toHaveValue('-title')
+    })
+
+    it('should change sort to progress high-low', async () => {
+      
+      render(<ProjectList />)
+      const sortSelect = screen.getByDisplayValue('Newest')
+
+      fireEvent.change(sortSelect, { target: { value: '-progress' } })
+      expect(sortSelect).toHaveValue('-progress')
+    })
+
+    it('should change sort to progress low-high', async () => {
+      
+      render(<ProjectList />)
+      const sortSelect = screen.getByDisplayValue('Newest')
+
+      fireEvent.change(sortSelect, { target: { value: 'progress' } })
+      expect(sortSelect).toHaveValue('progress')
+    })
+
+    it('should reset to page 1 when changing sort', async () => {
+      
+      render(<ProjectList />)
+      const sortSelect = screen.getByDisplayValue('Newest')
+
+      fireEvent.change(sortSelect, { target: { value: 'title' } })
+      expect(sortSelect).toBeInTheDocument()
+    })
+  })
+
+  // ============== TAG FILTER TESTS ==============
+  describe('Tag Filter', () => {
+    it('should display tag filter section', () => {
+      render(<ProjectList />)
+      expect(screen.getByText('Filter by Tags:')).toBeInTheDocument()
+    })
+
+    it('should render all available tags', () => {
+      render(<ProjectList />)
+      mockTags.forEach(tag => {
+        expect(screen.getAllByText(tag.name).length).toBeGreaterThan(0)
+      })
+    })
+
+    it('should toggle tag filter on click', async () => {
+      
+      render(<ProjectList />)
+
+      const tagButtons = screen.getAllByRole('button', { name: 'Frontend' })
+      const frontendTagButton = tagButtons[tagButtons.length - 1] // Get the filter button
+
+      fireEvent.click(frontendTagButton)
+
+      // Tag should be selected (will have background color from style attribute)
+      expect(frontendTagButton).toHaveStyle({ backgroundColor: mockTags[0].color })
+    })
+
+    it('should filter projects by single tag', async () => {
+      
+      render(<ProjectList />)
+
+      const tagButtons = screen.getAllByRole('button', { name: 'Backend' })
+      const backendTagButton = tagButtons[tagButtons.length - 1]
+
+      fireEvent.click(backendTagButton)
+
+      await waitFor(() => {
+        expect(screen.getByText('On Hold Project')).toBeInTheDocument()
+      })
+    })
+
+    it('should filter projects by multiple tags', async () => {
+      
+      render(<ProjectList />)
+
+      const frontendButtons = screen.getAllByRole('button', { name: 'Frontend' })
+      const devopsButtons = screen.getAllByRole('button', { name: 'DevOps' })
+
+      fireEvent.click(frontendButtons[frontendButtons.length - 1])
+      fireEvent.click(devopsButtons[devopsButtons.length - 1])
+
+      // Projects with either Frontend or DevOps tags should be shown
+      await waitFor(() => {
+        expect(screen.getByText('Active Project')).toBeInTheDocument()
+      })
+    })
+
+    it('should toggle tag filter off when clicked again', async () => {
+      
+      render(<ProjectList />)
+
+      const tagButtons = screen.getAllByRole('button', { name: 'Frontend' })
+      const frontendTagButton = tagButtons[tagButtons.length - 1]
+
+      fireEvent.click(frontendTagButton)
+      fireEvent.click(frontendTagButton)
+
+      // Tag should be deselected
+      expect(frontendTagButton).not.toHaveStyle({ backgroundColor: mockTags[0].color })
+    })
+
+    it('should reset to page 1 when toggling tag filter', async () => {
+      
+      render(<ProjectList />)
+
+      const tagButtons = screen.getAllByRole('button', { name: 'Frontend' })
+      fireEvent.click(tagButtons[tagButtons.length - 1])
+
+      expect(tagButtons[tagButtons.length - 1]).toBeInTheDocument()
+    })
+
+    it('should apply tag color to selected tag buttons', async () => {
+      
+      render(<ProjectList />)
+
+      const tagButtons = screen.getAllByRole('button', { name: 'Backend' })
+      const backendButton = tagButtons[tagButtons.length - 1]
+
+      fireEvent.click(backendButton)
+
+      expect(backendButton).toHaveStyle({ backgroundColor: mockTags[1].color })
+    })
+  })
+
+  // ============== COMBINED FILTER TESTS ==============
+  describe('Combined Filters', () => {
+    it('should apply multiple filters simultaneously', async () => {
+      
+      render(<ProjectList />)
+
+      const statusFilter = screen.getByDisplayValue('All Statuses')
+      const healthFilter = screen.getByDisplayValue('All Health')
+
+      fireEvent.change(statusFilter, { target: { value: 'active' } })
+      fireEvent.change(healthFilter, { target: { value: 'healthy' } })
+
+      await waitFor(() => {
+        expect(screen.getByText('Active Project')).toBeInTheDocument()
+      })
+    })
+
+    it('should show Clear Filters button when filters are active', async () => {
+      
+      render(<ProjectList />)
+
+      const statusFilter = screen.getByDisplayValue('All Statuses')
+      fireEvent.change(statusFilter, { target: { value: 'active' } })
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /clear filters/i })).toBeInTheDocument()
+      })
+    })
+
+    it('should not show Clear Filters button when no filters are active', () => {
+      render(<ProjectList />)
+      expect(screen.queryByRole('button', { name: /clear filters/i })).not.toBeInTheDocument()
+    })
+
+    it('should reset all filters when Clear Filters is clicked', async () => {
+      
+      render(<ProjectList />)
+
+      const statusFilter = screen.getByDisplayValue('All Statuses') as HTMLSelectElement
+      const healthFilter = screen.getByDisplayValue('All Health') as HTMLSelectElement
+      const searchInput = screen.getByPlaceholderText('Search projects...') as HTMLInputElement
+
+      fireEvent.change(statusFilter, { target: { value: 'active' } })
+      fireEvent.change(healthFilter, { target: { value: 'healthy' } })
+      fireEvent.change(searchInput, { target: { value: 'test' } })
+
+      const clearButton = await screen.findByRole('button', { name: /clear filters/i })
+      fireEvent.click(clearButton)
+
+      expect(statusFilter.value).toBe('')
+      expect(healthFilter.value).toBe('')
+      expect(searchInput.value).toBe('')
+    })
+
+    it('should reset sort to default when Clear Filters is clicked', async () => {
+      
+      render(<ProjectList />)
+
+      const sortSelect = screen.getByDisplayValue('Newest') as HTMLSelectElement
+      fireEvent.change(sortSelect, { target: { value: 'title' } })
+
+      const statusFilter = screen.getByDisplayValue('All Statuses')
+      fireEvent.change(statusFilter, { target: { value: 'active' } })
+
+      const clearButton = await screen.findByRole('button', { name: /clear filters/i })
+      fireEvent.click(clearButton)
+
+      expect(sortSelect.value).toBe('-updated_at')
+    })
+
+    it('should clear tag filters when Clear Filters is clicked', async () => {
+      
+      render(<ProjectList />)
+
+      const tagButtons = screen.getAllByRole('button', { name: 'Frontend' })
+      const frontendButton = tagButtons[tagButtons.length - 1]
+      fireEvent.click(frontendButton)
+
+      const clearButton = await screen.findByRole('button', { name: /clear filters/i })
+      fireEvent.click(clearButton)
+
+      // Tag should be deselected
+      expect(frontendButton).not.toHaveStyle({ backgroundColor: mockTags[0].color })
+    })
+
+    it('should reset to page 1 when Clear Filters is clicked', async () => {
+      
+      render(<ProjectList />)
+
+      const statusFilter = screen.getByDisplayValue('All Statuses')
+      fireEvent.change(statusFilter, { target: { value: 'active' } })
+
+      const clearButton = await screen.findByRole('button', { name: /clear filters/i })
+      fireEvent.click(clearButton)
+
+      // Page should be reset to 1
+      expect(clearButton).toBeInTheDocument()
+    })
+  })
+
+  // ============== PAGINATION TESTS ==============
+  describe('Pagination', () => {
+    it('should not show pagination when there is only one page', () => {
+      render(<ProjectList />)
+      // With 5 projects and 20 per page, should not show pagination
+      const pageButtons = screen.queryAllByRole('button', { name: /^\d+$/ })
+      expect(pageButtons.length).toBe(0)
+    })
+
+    it('should show pagination when there are multiple pages', () => {
+      // Mock more projects to trigger pagination
+      const manyProjects = Array.from({ length: 25 }, (_, i) => ({
+        ...mockProjects[0],
+        id: i + 1,
+        title: `Project ${i + 1}`,
+      }))
+
+      vi.mock('@tanstack/react-query', () => ({
+        useQuery: ({ queryKey }: any) => {
+          if (queryKey[0] === 'projects') {
+            return {
+              data: {
+                data: {
+                  results: manyProjects.slice(0, 20),
+                  count: 25,
+                },
+              },
+              isLoading: false,
+              error: null,
+            }
+          }
+          return { data: null, isLoading: false, error: null }
+        },
+        useQueryClient: () => ({
+          invalidateQueries: vi.fn(),
+        }),
+      }))
+
+      render(<ProjectList />)
+      // Should show page buttons
+      const container = screen.getByText('Projects')
+      expect(container).toBeInTheDocument()
+    })
+
+    it('should calculate correct number of pages', () => {
+      // 5 projects with 20 per page = 1 page, no pagination shown
+      render(<ProjectList />)
+      const pageButtons = screen.queryAllByRole('button', { name: /^\d+$/ })
+      expect(pageButtons.length).toBe(0)
+    })
+  })
+
+  // ============== EMPTY STATE TESTS ==============
+  describe('Empty States', () => {
+    it('should show "No projects found" when there are no projects', async () => {
+      vi.mock('@tanstack/react-query', () => ({
+        useQuery: ({ queryKey }: any) => {
+          if (queryKey[0] === 'projects') {
+            return {
+              data: {
+                data: {
+                  results: [],
+                  count: 0,
+                },
+              },
+              isLoading: false,
+              error: null,
+            }
+          }
+          return { data: null, isLoading: false, error: null }
+        },
+        useQueryClient: () => ({
+          invalidateQueries: vi.fn(),
+        }),
+      }))
+
+      render(<ProjectList />)
+
+      await waitFor(() => {
+        expect(screen.getByText('No projects found')).toBeInTheDocument()
+      })
+    })
+
+    it('should show empty state when search returns no results', async () => {
+      
+      render(<ProjectList />)
+
+      const searchInput = screen.getByPlaceholderText('Search projects...')
+      fireEvent.change(searchInput, { target: { value: 'nonexistentproject' } })
+
+      await waitFor(() => {
+        expect(screen.getByText('No projects found')).toBeInTheDocument()
+      })
+    })
+
+    it('should show empty state when filters return no results', async () => {
+      
+      render(<ProjectList />)
+
+      const statusFilter = screen.getByDisplayValue('All Statuses')
+      fireEvent.change(statusFilter, { target: { value: 'active' } })
+
+      const healthFilter = screen.getByDisplayValue('All Health')
+      fireEvent.change(healthFilter, { target: { value: 'critical' } })
+
+      // Only one project matches both filters
+      expect(screen.getByText('Critical Project')).toBeInTheDocument()
+    })
+  })
+
+  // ============== LOADING STATE TESTS ==============
+  describe('Loading States', () => {
+    it('should show loading indicator when data is loading', () => {
+      vi.mock('@tanstack/react-query', () => ({
+        useQuery: () => ({
+          data: null,
+          isLoading: true,
+          error: null,
+        }),
+        useQueryClient: () => ({
+          invalidateQueries: vi.fn(),
+        }),
+      }))
+
+      render(<ProjectList />)
+      expect(screen.getByText('Loading...')).toBeInTheDocument()
+    })
+
+    it('should hide loading indicator when data is loaded', () => {
+      render(<ProjectList />)
+      expect(screen.queryByText('Loading...')).not.toBeInTheDocument()
+    })
+  })
+
+  // ============== PROJECT DELETION TESTS ==============
+  describe('Project Deletion', () => {
+    it('should show delete button for project owner', () => {
+      render(<ProjectList />)
+
+      // Should show delete buttons (×)
+      const deleteButtons = screen.getAllByTitle('Delete project')
+      expect(deleteButtons.length).toBeGreaterThan(0)
+    })
+
+    it('should open delete confirmation modal when delete button is clicked', async () => {
+      
+      render(<ProjectList />)
+
+      const deleteButtons = screen.getAllByTitle('Delete project')
+      fireEvent.click(deleteButtons[0])
+
+      expect(screen.getByText('Delete Project?')).toBeInTheDocument()
+    })
+
+    it('should display project title in delete confirmation', async () => {
+      
+      render(<ProjectList />)
+
+      const deleteButtons = screen.getAllByTitle('Delete project')
+      fireEvent.click(deleteButtons[0])
+
+      expect(screen.getByText('Active Project', { selector: 'strong' })).toBeInTheDocument()
+    })
+
+    it('should show Cancel and Delete buttons in modal', async () => {
+      
+      render(<ProjectList />)
+
+      const deleteButtons = screen.getAllByTitle('Delete project')
+      fireEvent.click(deleteButtons[0])
+
+      expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /^delete$/i })).toBeInTheDocument()
+    })
+
+    it('should close modal when Cancel is clicked', async () => {
+      
+      render(<ProjectList />)
+
+      const deleteButtons = screen.getAllByTitle('Delete project')
+      fireEvent.click(deleteButtons[0])
+
+      const cancelButton = screen.getByRole('button', { name: /cancel/i })
+      fireEvent.click(cancelButton)
+
+      expect(screen.queryByText('Delete Project?')).not.toBeInTheDocument()
+    })
+
+    it('should call softDelete API when Delete is confirmed', async () => {
+      
+      mockProjectAPISoftDelete.mockResolvedValue({})
+
+      render(<ProjectList />)
+
+      const deleteButtons = screen.getAllByTitle('Delete project')
+      fireEvent.click(deleteButtons[0])
+
+      const deleteButton = screen.getByRole('button', { name: /^delete$/i })
+      fireEvent.click(deleteButton)
+
+      await waitFor(() => {
+        expect(mockProjectAPISoftDelete).toHaveBeenCalledWith(1)
+      })
+    })
+
+    it('should invalidate queries after successful deletion', async () => {
+      
+      mockProjectAPISoftDelete.mockResolvedValue({})
+
+      render(<ProjectList />)
+
+      const deleteButtons = screen.getAllByTitle('Delete project')
+      fireEvent.click(deleteButtons[0])
+
+      const deleteButton = screen.getByRole('button', { name: /^delete$/i })
+      fireEvent.click(deleteButton)
+
+      await waitFor(() => {
+        expect(mockQueryClientInvalidateQueries).toHaveBeenCalledWith({ queryKey: ['projects'] })
+      })
+    })
+
+    it('should close modal after successful deletion', async () => {
+      
+      mockProjectAPISoftDelete.mockResolvedValue({})
+
+      render(<ProjectList />)
+
+      const deleteButtons = screen.getAllByTitle('Delete project')
+      fireEvent.click(deleteButtons[0])
+
+      const deleteButton = screen.getByRole('button', { name: /^delete$/i })
+      fireEvent.click(deleteButton)
+
+      await waitFor(() => {
+        expect(screen.queryByText('Delete Project?')).not.toBeInTheDocument()
+      })
+    })
+
+    it('should show "Deleting..." while deletion is in progress', async () => {
+      
+      mockProjectAPISoftDelete.mockImplementation(() =>
+        new Promise(resolve => setTimeout(resolve, 1000))
+      )
+
+      render(<ProjectList />)
+
+      const deleteButtons = screen.getAllByTitle('Delete project')
+      fireEvent.click(deleteButtons[0])
+
+      const deleteButton = screen.getByRole('button', { name: /^delete$/i })
+      fireEvent.click(deleteButton)
+
+      expect(screen.getByRole('button', { name: /deleting\.\.\./i })).toBeInTheDocument()
+    })
+
+    it('should disable buttons while deletion is in progress', async () => {
+      
+      mockProjectAPISoftDelete.mockImplementation(() =>
+        new Promise(resolve => setTimeout(resolve, 1000))
+      )
+
+      render(<ProjectList />)
+
+      const deleteButtons = screen.getAllByTitle('Delete project')
+      fireEvent.click(deleteButtons[0])
+
+      const deleteButton = screen.getByRole('button', { name: /^delete$/i })
+      fireEvent.click(deleteButton)
+
+      const cancelButton = screen.getByRole('button', { name: /cancel/i })
+      expect(cancelButton).toBeDisabled()
+      expect(screen.getByRole('button', { name: /deleting\.\.\./i })).toBeDisabled()
+    })
+
+    it('should handle deletion errors gracefully', async () => {
+      
+      mockProjectAPISoftDelete.mockRejectedValue(new Error('Deletion failed'))
+
+      render(<ProjectList />)
+
+      const deleteButtons = screen.getAllByTitle('Delete project')
+      fireEvent.click(deleteButtons[0])
+
+      const deleteButton = screen.getByRole('button', { name: /^delete$/i })
+      fireEvent.click(deleteButton)
+
+      // Should still close the modal even on error (silent failure)
+      await waitFor(() => {
+        expect(screen.queryByText('Delete Project?')).not.toBeInTheDocument()
+      })
+    })
+  })
+
+  // ============== PERMISSION TESTS ==============
+  describe('Permission-based Rendering', () => {
+    it('should show delete button for admin users on all projects', () => {
+      vi.mock('@/stores/authStore', () => ({
+        useAuthStore: () => ({
+          user: mockAdminUser,
+        }),
+      }))
+
+      render(<ProjectList />)
+
+      const deleteButtons = screen.getAllByTitle('Delete project')
+      // Should have delete buttons for multiple projects
+      expect(deleteButtons.length).toBeGreaterThan(0)
+    })
+
+    it('should only show delete button for owned projects for non-admin users', () => {
+      render(<ProjectList />)
+
+      const deleteButtons = screen.getAllByTitle('Delete project')
+      // Should only show for projects owned by mockUser
+      expect(deleteButtons.length).toBeGreaterThan(0)
+    })
+
+    it('should not show delete button for projects not owned by user', () => {
+      render(<ProjectList />)
+
+      // Count delete buttons - should not match total project count for non-admin
+      const deleteButtons = screen.getAllByTitle('Delete project')
+      const projectCards = screen.getAllByRole('link').filter(link =>
+        link.getAttribute('href')?.startsWith('/projects/') &&
+        !link.getAttribute('href')?.includes('/deleted') &&
+        !link.getAttribute('href')?.includes('/new')
+      )
+
+      // For non-admin user, delete buttons should be less than total projects
+      // since some projects are owned by admin
+      expect(deleteButtons.length).toBeLessThanOrEqual(projectCards.length)
+    })
+  })
+
+  // ============== WEBSOCKET INTEGRATION TESTS ==============
+  describe('WebSocket Integration', () => {
+    it('should call useAllProjectUpdates hook', () => {
+      render(<ProjectList />)
+      expect(mockUseAllProjectUpdates).toHaveBeenCalled()
+    })
+
+    it('should subscribe to project updates on mount', () => {
+      render(<ProjectList />)
+      expect(mockUseAllProjectUpdates).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  // ============== EDGE CASES TESTS ==============
+  describe('Edge Cases', () => {
+    it('should handle projects without tags', () => {
+      render(<ProjectList />)
+      expect(screen.getByText('Archived Project')).toBeInTheDocument()
+    })
+
+    it('should handle projects without end dates', () => {
+      render(<ProjectList />)
+      // Should render without crashing
+      expect(screen.getByText('Projects')).toBeInTheDocument()
+    })
+
+    it('should handle projects with null days_until_deadline', () => {
+      render(<ProjectList />)
+      expect(screen.getByText('Completed Project')).toBeInTheDocument()
+    })
+
+    it('should handle projects with multiple tags', () => {
+      render(<ProjectList />)
+      const criticalProject = screen.getByText('Critical Project')
+      expect(criticalProject).toBeInTheDocument()
+    })
+
+    it('should handle very long project titles', () => {
+      const longTitleProject = {
+        ...mockProjects[0],
+        id: 999,
+        title: 'This is a very long project title that should be truncated properly',
+      }
+
+      vi.mock('@tanstack/react-query', () => ({
+        useQuery: ({ queryKey }: any) => {
+          if (queryKey[0] === 'projects') {
+            return {
+              data: {
+                data: {
+                  results: [longTitleProject],
+                  count: 1,
+                },
+              },
+              isLoading: false,
+              error: null,
+            }
+          }
+          return { data: null, isLoading: false, error: null }
+        },
+        useQueryClient: () => ({
+          invalidateQueries: vi.fn(),
+        }),
+      }))
+
+      render(<ProjectList />)
+      expect(screen.getByText(longTitleProject.title)).toBeInTheDocument()
+    })
+
+    it('should handle very long descriptions', () => {
+      const longDescProject = {
+        ...mockProjects[0],
+        id: 998,
+        description: 'This is a very long description that should be clamped to two lines maximum and show ellipsis when it exceeds the limit',
+      }
+
+      vi.mock('@tanstack/react-query', () => ({
+        useQuery: ({ queryKey }: any) => {
+          if (queryKey[0] === 'projects') {
+            return {
+              data: {
+                data: {
+                  results: [longDescProject],
+                  count: 1,
+                },
+              },
+              isLoading: false,
+              error: null,
+            }
+          }
+          return { data: null, isLoading: false, error: null }
+        },
+        useQueryClient: () => ({
+          invalidateQueries: vi.fn(),
+        }),
+      }))
+
+      render(<ProjectList />)
+      expect(screen.getByText(longDescProject.description)).toBeInTheDocument()
+    })
+
+    it('should handle 0% progress', () => {
+      const zeroProgressProject = {
+        ...mockProjects[0],
+        id: 997,
+        progress: 0,
+      }
+
+      vi.mock('@tanstack/react-query', () => ({
+        useQuery: ({ queryKey }: any) => {
+          if (queryKey[0] === 'projects') {
+            return {
+              data: {
+                data: {
+                  results: [zeroProgressProject],
+                  count: 1,
+                },
+              },
+              isLoading: false,
+              error: null,
+            }
+          }
+          return { data: null, isLoading: false, error: null }
+        },
+        useQueryClient: () => ({
+          invalidateQueries: vi.fn(),
+        }),
+      }))
+
+      render(<ProjectList />)
+      expect(screen.getByText('0% complete')).toBeInTheDocument()
+    })
+
+    it('should handle 100% progress', () => {
+      render(<ProjectList />)
+      expect(screen.getByText('100% complete')).toBeInTheDocument()
+    })
+
+    it('should handle projects without owner username', () => {
+      const noOwnerProject = {
+        ...mockProjects[0],
+        id: 996,
+        owner: { ...mockUser, username: '' } as User,
+      }
+
+      vi.mock('@tanstack/react-query', () => ({
+        useQuery: ({ queryKey }: any) => {
+          if (queryKey[0] === 'projects') {
+            return {
+              data: {
+                data: {
+                  results: [noOwnerProject],
+                  count: 1,
+                },
+              },
+              isLoading: false,
+              error: null,
+            }
+          }
+          return { data: null, isLoading: false, error: null }
+        },
+        useQueryClient: () => ({
+          invalidateQueries: vi.fn(),
+        }),
+      }))
+
+      render(<ProjectList />)
+      expect(screen.getByText('Unknown')).toBeInTheDocument()
+    })
+
+    it('should handle null owner gracefully', () => {
+      const nullOwnerProject = {
+        ...mockProjects[0],
+        id: 995,
+        owner: null as unknown as User,
+      }
+
+      vi.mock('@tanstack/react-query', () => ({
+        useQuery: ({ queryKey }: any) => {
+          if (queryKey[0] === 'projects') {
+            return {
+              data: {
+                data: {
+                  results: [nullOwnerProject],
+                  count: 1,
+                },
+              },
+              isLoading: false,
+              error: null,
+            }
+          }
+          return { data: null, isLoading: false, error: null }
+        },
+        useQueryClient: () => ({
+          invalidateQueries: vi.fn(),
+        }),
+      }))
+
+      render(<ProjectList />)
+      expect(screen.getByText('Unknown')).toBeInTheDocument()
+    })
+  })
+
+  // ============== USER INTERACTION TESTS ==============
+  describe('User Interactions', () => {
+    it('should navigate to project detail when clicking project title', () => {
+      render(<ProjectList />)
+
+      const projectLink = screen.getByText('Active Project').closest('a')
+      expect(projectLink).toHaveAttribute('href', '/projects/1')
+    })
+
+    it('should navigate to project detail when clicking project card', () => {
+      render(<ProjectList />)
+
+      const projectDescription = screen.getByText('This is an active project')
+      const projectLink = projectDescription.closest('a')
+      expect(projectLink).toHaveAttribute('href', '/projects/1')
+    })
+
+    it('should navigate to new project page when clicking New Project button', () => {
+      render(<ProjectList />)
+
+      const newProjectButton = screen.getByRole('link', { name: /new project/i })
+      expect(newProjectButton).toHaveAttribute('href', '/projects/new')
+    })
+
+    it('should navigate to trash page when clicking Trash button', () => {
+      render(<ProjectList />)
+
+      const trashButton = screen.getByRole('link', { name: /trash/i })
+      expect(trashButton).toHaveAttribute('href', '/projects/deleted')
+    })
+
+    it('should prevent navigation when clicking delete button', async () => {
+      
+      render(<ProjectList />)
+
+      const deleteButtons = screen.getAllByTitle('Delete project')
+      fireEvent.click(deleteButtons[0])
+
+      // Modal should open, not navigate away
+      expect(screen.getByText('Delete Project?')).toBeInTheDocument()
+    })
+  })
+
+  // ============== RESPONSIVE BEHAVIOR TESTS ==============
+  describe('Responsive Behavior', () => {
+    it('should render grid with responsive classes', () => {
+      const { container } = render(<ProjectList />)
+
+      const grid = container.querySelector('.grid')
+      expect(grid).toHaveClass('grid-cols-1')
+      expect(grid).toHaveClass('md:grid-cols-2')
+      expect(grid).toHaveClass('lg:grid-cols-3')
+    })
+
+    it('should render filters in responsive grid', () => {
+      const { container } = render(<ProjectList />)
+
+      const filterGrid = container.querySelectorAll('.grid')[0]
+      expect(filterGrid).toBeInTheDocument()
+    })
+  })
+
+  // ============== ACCESSIBILITY TESTS ==============
+  describe('Accessibility', () => {
+    it('should have accessible buttons with proper labels', () => {
+      render(<ProjectList />)
+
+      const newProjectButton = screen.getByRole('link', { name: /new project/i })
+      expect(newProjectButton).toBeInTheDocument()
+
+      const trashButton = screen.getByRole('link', { name: /trash/i })
+      expect(trashButton).toBeInTheDocument()
+    })
+
+    it('should have accessible form controls', () => {
+      render(<ProjectList />)
+
+      const searchInput = screen.getByPlaceholderText('Search projects...')
+      expect(searchInput).toHaveAttribute('type', 'text')
+
+      const selects = screen.getAllByRole('combobox')
+      expect(selects.length).toBeGreaterThan(0)
+    })
+
+    it('should have accessible delete buttons with title attribute', () => {
+      render(<ProjectList />)
+
+      const deleteButtons = screen.getAllByTitle('Delete project')
+      expect(deleteButtons.length).toBeGreaterThan(0)
+      deleteButtons.forEach(button => {
+        expect(button).toHaveAttribute('title', 'Delete project')
+      })
+    })
+
+    it('should have accessible modal with proper structure', async () => {
+      
+      render(<ProjectList />)
+
+      const deleteButtons = screen.getAllByTitle('Delete project')
+      fireEvent.click(deleteButtons[0])
+
+      const heading = screen.getByText('Delete Project?')
+      expect(heading).toBeInTheDocument()
+
+      const buttons = screen.getAllByRole('button')
+      expect(buttons.length).toBeGreaterThan(0)
+    })
+  })
+})

@@ -1,0 +1,4 @@
+{{ object.activity_type }}
+{{ object.description }}
+{{ object.project.title }}
+{{ object.actor.username }}
