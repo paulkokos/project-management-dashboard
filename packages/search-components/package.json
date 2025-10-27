@@ -40,5 +40,8 @@
     "url": "https://github.com/paulkokos/project-management-dashboard.git",
     "directory": "packages/search-components"
   },
-  "homepage": "https://github.com/paulkokos/project-management-dashboard/tree/master/packages/search-components"
+  "homepage": "https://github.com/paulkokos/project-management-dashboard/tree/master/packages/search-components",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/"
+  }
 }
