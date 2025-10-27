@@ -72,7 +72,6 @@ jobs:
         run: python -m build
 
       - name: Publish to PyPI
-        working-directory: packages/search-utils
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          packages-dir: dist/
+          packages-dir: packages/search-utils/dist/
