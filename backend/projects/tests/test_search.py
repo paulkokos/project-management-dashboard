@@ -35,9 +35,9 @@ class TestSearchAPI(TestCase):
         self.dev_role = Role.objects.create(name="Developer")
 
         # Create tags
-        self.tag_mobile = Tag.objects.create(name="mobile")
-        self.tag_backend = Tag.objects.create(name="backend")
-        self.tag_urgent = Tag.objects.create(name="urgent")
+        self.tag_mobile, _ = Tag.objects.get_or_create(name="mobile")
+        self.tag_backend, _ = Tag.objects.get_or_create(name="backend")
+        self.tag_urgent, _ = Tag.objects.get_or_create(name="urgent")
 
         # Create projects
         self.project1 = Project.objects.create(

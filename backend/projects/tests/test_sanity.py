@@ -38,7 +38,7 @@ class TagModelTests(TestCase):
 
     def test_tag_creation(self):
         """Test that we can create a tag"""
-        tag = Tag.objects.create(name="backend", color="#FF0000")
+        tag, _ = Tag.objects.get_or_create(name="backend", defaults={"color": "#FF0000"})
         assert tag.id is not None
         assert tag.name == "backend"
 

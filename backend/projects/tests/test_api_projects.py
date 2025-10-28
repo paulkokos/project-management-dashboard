@@ -51,8 +51,14 @@ class ProjectAPITests(TestCase):
         )
 
         # Create tags
-        self.backend_tag = Tag.objects.create(name="backend", color="#3B82F6")
-        self.frontend_tag = Tag.objects.create(name="frontend", color="#10B981")
+        self.backend_tag, _ = Tag.objects.get_or_create(
+            name="backend",
+            defaults={"color": "#3B82F6"}
+        )
+        self.frontend_tag, _ = Tag.objects.get_or_create(
+            name="frontend",
+            defaults={"color": "#10B981"}
+        )
 
         # Create test projects
         self.project = Project.objects.create(
