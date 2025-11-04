@@ -21,6 +21,7 @@ jobs:
         with:
           node-version: '22'
           registry-url: 'https://npm.pkg.github.com'
+          scope: '@paulkokos'
 
       - name: Install dependencies - search-components
         working-directory: packages/search-components
@@ -32,7 +33,7 @@ jobs:
 
       - name: Publish search-components to GitHub Packages
         working-directory: packages/search-components
-        run: npm publish
+        run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -46,7 +47,7 @@ jobs:
 
       - name: Publish ui-components to GitHub Packages
         working-directory: packages/ui-components
-        run: npm publish
+        run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
