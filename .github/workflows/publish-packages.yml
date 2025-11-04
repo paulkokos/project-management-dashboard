@@ -19,7 +19,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '22'
           registry-url: 'https://npm.pkg.github.com'
 
       - name: Install dependencies - search-components
@@ -30,7 +30,7 @@ jobs:
         working-directory: packages/search-components
         run: npm run build
 
-      - name: Publish search-components to npm
+      - name: Publish search-components to GitHub Packages
         working-directory: packages/search-components
         run: npm publish
         env:
@@ -44,7 +44,7 @@ jobs:
         working-directory: packages/ui-components
         run: npm run build
 
-      - name: Publish ui-components to npm
+      - name: Publish ui-components to GitHub Packages
         working-directory: packages/ui-components
         run: npm publish
         env:
