@@ -1,6 +1,6 @@
 {
   "name": "@paulkokos/search-components",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "Reusable React search components with Elasticsearch integration - SearchAutocomplete, SearchFilters, SearchResults",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

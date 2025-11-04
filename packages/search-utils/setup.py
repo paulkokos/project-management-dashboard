@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="project-management-search-utils",
-    version="1.0.7",
+    version="1.0.8",
     author="Paul Kokos",
     author_email="paulkokos@example.com",
     description="Django search utilities for Elasticsearch integration with permission-aware filtering",
