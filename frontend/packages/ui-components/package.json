@@ -1,7 +1,7 @@
 {
   "type": "module",
   "name": "@paulkokos/project-dashboard-ui",
-  "version": "1.0.0",
+  "version": "1.0.8",
   "description": "Reusable React component library for Project Management Dashboard",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
@@ -43,5 +43,8 @@
   ],
   "author": "paulkokos",
   "license": "MIT",
-  "homepage": "https://github.com/paulkokos/project-management-dashboard#readme"
+  "homepage": "https://github.com/paulkokos/project-management-dashboard#readme",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/"
+  }
 }

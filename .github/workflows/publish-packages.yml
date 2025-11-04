@@ -51,6 +51,20 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      - name: Install dependencies - frontend project-dashboard-ui
+        working-directory: frontend/packages/ui-components
+        run: npm ci
+
+      - name: Build frontend project-dashboard-ui
+        working-directory: frontend/packages/ui-components
+        run: npm run build
+
+      - name: Publish frontend project-dashboard-ui to GitHub Packages
+        working-directory: frontend/packages/ui-components
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
   publish-pip-package:
     runs-on: ubuntu-latest
     permissions:
