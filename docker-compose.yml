@@ -1,0 +1,148 @@
+version: '3.9'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: project_dashboard_db
+    environment:
+      POSTGRES_DB: ${DB_NAME:-project_management_db}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app_network
+    restart: unless-stopped
+
+  # Redis Cache & Message Broker
+  redis:
+    image: redis:7-alpine
+    container_name: project_dashboard_redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - redis_data:/data
+    networks:
+      - app_network
+    restart: unless-stopped
+
+  # Elasticsearch (optional, for full-text search)
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.14.0
+    container_name: project_dashboard_elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200 >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    networks:
+      - app_network
+    restart: unless-stopped
+
+  # Django Backend
+  backend:
+    build:
+      context: .
+      dockerfile: deployment/docker/Dockerfile.backend
+    container_name: project_dashboard_backend
+    environment:
+      DEBUG: ${DEBUG:-False}
+      SECRET_KEY: ${SECRET_KEY:-django-insecure-change-me}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1,backend,localhost:8000}
+      DB_ENGINE: django.db.backends.postgresql
+      DB_NAME: ${DB_NAME:-project_management_db}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_HOST: db
+      DB_PORT: 5432
+      REDIS_URL: redis://redis:6379/0
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_CACHE_URL: redis://redis:6379/1
+      CELERY_BROKER_URL: redis://redis:6379/0
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:8000,http://frontend}
+      SECURE_SSL_REDIRECT: ${SECURE_SSL_REDIRECT:-False}
+      SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-False}
+      CSRF_COOKIE_SECURE: ${CSRF_COOKIE_SECURE:-False}
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    command: >
+      sh -c "python manage.py makemigrations --noinput &&
+             python manage.py migrate --noinput &&
+             python manage.py collectstatic --noinput &&
+             python manage.py seed_database &&
+             daphne -b 0.0.0.0 -p 8000 config.asgi:application"
+    volumes:
+      - staticfiles:/app/staticfiles
+    networks:
+      - app_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # React Frontend
+  frontend:
+    build:
+      context: .
+      dockerfile: deployment/docker/Dockerfile.frontend
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8000/api}
+        VITE_WS_URL: ${VITE_WS_URL:-ws://localhost:8000}
+    container_name: project_dashboard_frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - app_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+networks:
+  app_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  elasticsearch_data:
+  staticfiles:

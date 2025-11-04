@@ -1,0 +1,42 @@
+{
+  "name": "@project-dashboard/component-library",
+  "version": "1.0.0",
+  "description": "Reusable React component library for Project Management Dashboard",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "prepublishOnly": "npm run build",
+    "type-check": "tsc --noEmit"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/project-management-dashboard.git",
+    "directory": "frontend/component-library"
+  },
+  "keywords": [
+    "react",
+    "components",
+    "project-management",
+    "dashboard",
+    "typescript"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "typescript": "^5.3.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

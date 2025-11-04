@@ -1,0 +1,80 @@
+name: Publish Packages
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+
+jobs:
+  publish-npm-packages:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          registry-url: 'https://npm.pkg.github.com'
+
+      - name: Install dependencies - search-components
+        working-directory: packages/search-components
+        run: npm ci
+
+      - name: Build search-components
+        working-directory: packages/search-components
+        run: npm run build
+
+      - name: Publish search-components to npm
+        working-directory: packages/search-components
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install dependencies - ui-components
+        working-directory: packages/ui-components
+        run: npm ci
+
+      - name: Build ui-components
+        working-directory: packages/ui-components
+        run: npm run build
+
+      - name: Publish ui-components to npm
+        working-directory: packages/ui-components
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish-pip-package:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Install build dependencies
+        run: pip install build twine
+
+      - name: Build search-utils package
+        working-directory: packages/search-utils
+        run: python -m build
+
+      - name: Publish to PyPI
+        working-directory: packages/search-utils
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+        run: |
+          python -m twine upload dist/* \
+            --repository pypi

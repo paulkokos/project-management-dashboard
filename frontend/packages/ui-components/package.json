@@ -1,0 +1,47 @@
+{
+  "type": "module",
+  "name": "@paulkokos/project-dashboard-ui",
+  "version": "1.0.0",
+  "description": "Reusable React component library for Project Management Dashboard",
+  "main": "dist/index.js",
+  "module": "dist/index.esm.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "rm -rf dist && tsc --outDir dist && rollup -c",
+    "dev": "tsc --watch",
+    "lint": "eslint src/**/*.tsx",
+    "type-check": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
+  },
+  "devDependencies": {
+    "@rollup/plugin-typescript": "^11.0.0",
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "rollup": "^3.0.0",
+    "tslib": "^2.8.1",
+    "typescript": "^5.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/paulkokos/project-management-dashboard.git",
+    "directory": "frontend/packages/ui-components"
+  },
+  "keywords": [
+    "react",
+    "components",
+    "ui",
+    "project-management",
+    "dashboard"
+  ],
+  "author": "paulkokos",
+  "license": "MIT",
+  "homepage": "https://github.com/paulkokos/project-management-dashboard#readme"
+}

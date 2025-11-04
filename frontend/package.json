@@ -1,0 +1,59 @@
+{
+  "name": "project-management-dashboard",
+  "version": "1.0.0",
+  "description": "Project Management Dashboard - Frontend",
+  "type": "module",
+  "private": true,
+  "proxy": "http://localhost:8000",
+  "engines": {
+    "node": ">=22.0.0",
+    "npm": ">=11.6.2"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/icons-material": "^7.3.4",
+    "@mui/material": "^7.3.4",
+    "@tanstack/react-query": "^5.55.0",
+    "axios": "^1.7.7",
+    "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-router-dom": "^7.9.4",
+    "socket.io-client": "^4.8.1",
+    "zustand": "^5.0.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.38.0",
+    "@tailwindcss/postcss": "^4.0.1",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.0.1",
+    "@types/node": "^22.10.2",
+    "@types/react": "^19.0.2",
+    "@types/react-dom": "^19.0.2",
+    "@typescript-eslint/eslint-plugin": "^8.16.0",
+    "@typescript-eslint/parser": "^8.16.0",
+    "@vitejs/plugin-react": "^4.3.3",
+    "@vitest/coverage-v8": "^4.0.1",
+    "eslint": "^9.38.0",
+    "eslint-config-prettier": "^10.1.0",
+    "eslint-plugin-react": "^7.37.2",
+    "eslint-plugin-react-hooks": "^5.0.0",
+    "globals": "^16.4.0",
+    "jsdom": "^27.0.1",
+    "prettier": "^3.3.3",
+    "typescript": "^5.7.2",
+    "vite": "^7.0.0",
+    "vitest": "^4.0.1"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "lint": "eslint src --ext .ts,.tsx",
+    "format": "prettier --write src"
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "name": "@paulkokos/ui-components",
+  "version": "1.0.3",
+  "description": "Reusable React UI components for project management dashboards",
+  "author": "Paul Kokos",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "clean": "rm -rf dist"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
+  },
+  "keywords": [
+    "react",
+    "components",
+    "ui",
+    "project-management",
+    "dashboard",
+    "risk-badge",
+    "deadline-indicator",
+    "team-member-count",
+    "milestone-progress"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/paulkokos/project-management-dashboard.git",
+    "directory": "packages/ui-components"
+  },
+  "bugs": {
+    "url": "https://github.com/paulkokos/project-management-dashboard/issues"
+  },
+  "homepage": "https://github.com/paulkokos/project-management-dashboard/tree/master/packages/ui-components",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/"
+  },
+  "dependencies": {
+    "typescript": "^5.9.3"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.2"
+  }
+}
