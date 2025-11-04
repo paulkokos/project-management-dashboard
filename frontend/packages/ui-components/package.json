@@ -1,7 +1,7 @@
 {
   "type": "module",
   "name": "@paulkokos/project-dashboard-ui",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "Reusable React component library for Project Management Dashboard",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
