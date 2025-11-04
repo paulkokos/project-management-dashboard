@@ -35,7 +35,7 @@ jobs:
         working-directory: packages/search-components
         run: npm publish --access public
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Install dependencies - ui-components
         working-directory: packages/ui-components
@@ -49,7 +49,7 @@ jobs:
         working-directory: packages/ui-components
         run: npm publish --access public
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   publish-pip-package:
     runs-on: ubuntu-latest
