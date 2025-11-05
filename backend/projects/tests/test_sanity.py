@@ -85,7 +85,8 @@ class ApplicationStructureTests(TestCase):
         """Verify serializers are available"""
         from projects import serializers
 
-        assert hasattr(serializers, "ProjectSerializer")
+        assert hasattr(serializers, "ProjectListSerializer")
+        assert hasattr(serializers, "ProjectDetailSerializer")
         assert hasattr(serializers, "TagSerializer")
 
     def test_views_exist(self):
