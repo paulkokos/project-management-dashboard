@@ -45,7 +45,7 @@
     "prettier": "^3.3.3",
     "typescript": "^5.7.2",
     "vite": "^7.0.0",
-    "vitest": "^4.0.1"
+    "vitest": "^4.0.7"
   },
   "scripts": {
     "dev": "vite",
