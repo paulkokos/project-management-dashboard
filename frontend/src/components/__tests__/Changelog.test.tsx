@@ -190,7 +190,7 @@ describe('Changelog Component', () => {
       metadata: {},
       changed_fields: ['description'],
       previous_values: { description: 'Some description' },
-      new_values: { description: null as any },
+      new_values: { description: null as unknown },
       change_reason: '',
       created_at: new Date().toISOString(),
     }

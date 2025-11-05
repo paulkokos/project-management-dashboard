@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { projectAPI } from '@/services';
 import { Changelog } from '@/components/Changelog';
-import { useAuthStore } from '@/stores/authStore';
 import { useChangelogUpdates } from '@/hooks/useProjectUpdates';
 
 export default function ProjectChangeLog() {
