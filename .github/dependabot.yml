@@ -1,8 +1,9 @@
 version: 2
 updates:
-  # Enable version updates for npm packages
+  # Enable version updates for npm packages (develop branch)
   - package-ecosystem: "npm"
     directory: "/frontend"
+    target-branch: "develop"
     schedule:
       interval: "weekly"
       day: "monday"
@@ -19,9 +20,10 @@ updates:
     pull-request-branch-name:
       separator: "/"
 
-  # Enable version updates for Python packages
+  # Enable version updates for Python packages (develop branch)
   - package-ecosystem: "pip"
     directory: "/backend"
+    target-branch: "develop"
     schedule:
       interval: "weekly"
       day: "monday"
@@ -38,9 +40,10 @@ updates:
     pull-request-branch-name:
       separator: "/"
 
-  # Enable security updates for GitHub Actions
+  # Enable security updates for GitHub Actions (develop branch)
   - package-ecosystem: "github-actions"
     directory: "/"
+    target-branch: "develop"
     schedule:
       interval: "weekly"
       day: "monday"
@@ -54,9 +57,10 @@ updates:
       prefix: "ci"
       include: "scope"
 
-  # Enable version updates for Docker
+  # Enable version updates for Docker (develop branch)
   - package-ecosystem: "docker"
     directory: "/deployment/docker"
+    target-branch: "develop"
     schedule:
       interval: "weekly"
       day: "monday"
@@ -66,6 +70,64 @@ updates:
     labels:
       - "dependencies"
       - "docker"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+
+  # Security-only updates for main branch
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    target-branch: "main"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "03:00"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "paulkokos"
+    labels:
+      - "dependencies"
+      - "frontend"
+      - "security"
+    security-updates-only: true
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+
+  - package-ecosystem: "pip"
+    directory: "/backend"
+    target-branch: "main"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "03:30"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "paulkokos"
+    labels:
+      - "dependencies"
+      - "backend"
+      - "security"
+    security-updates-only: true
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+
+  - package-ecosystem: "docker"
+    directory: "/deployment/docker"
+    target-branch: "main"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "04:30"
+    open-pull-requests-limit: 2
+    reviewers:
+      - "paulkokos"
+    labels:
+      - "dependencies"
+      - "docker"
+      - "security"
+    security-updates-only: true
     commit-message:
       prefix: "chore"
       include: "scope"
