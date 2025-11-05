@@ -36,7 +36,7 @@ elasticsearch==8.14.0
 # Development & Utilities
 python-dotenv==1.0.1
 Pillow==11.0.0
-requests==2.31.0
+requests==2.32.4
 
 # Testing
 pytest==8.0.2
