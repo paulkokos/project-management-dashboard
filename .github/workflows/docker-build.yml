@@ -41,8 +41,8 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: |
-            ${{ secrets.DOCKER_USERNAME }}/project-dashboard-backend
-            ghcr.io/paulkokos/project-management-dashboard-backend
+            ${{ github.event_name != 'pull_request' && format('{0}/project-dashboard-backend', secrets.DOCKER_USERNAME) || 'project-dashboard-backend' }}
+            ${{ github.event_name != 'pull_request' && 'ghcr.io/paulkokos/project-management-dashboard-backend' || '' }}
           tags: |
             type=ref,event=branch
             type=semver,pattern={{version}}
@@ -65,8 +65,8 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: |
-            ${{ secrets.DOCKER_USERNAME }}/project-dashboard-frontend
-            ghcr.io/paulkokos/project-management-dashboard-frontend
+            ${{ github.event_name != 'pull_request' && format('{0}/project-dashboard-frontend', secrets.DOCKER_USERNAME) || 'project-dashboard-frontend' }}
+            ${{ github.event_name != 'pull_request' && 'ghcr.io/paulkokos/project-management-dashboard-frontend' || '' }}
           tags: |
             type=ref,event=branch
             type=semver,pattern={{version}}
