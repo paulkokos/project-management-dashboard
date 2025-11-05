@@ -35,12 +35,10 @@ class ChangelogTests(TestCase):
 
         # Create tags
         self.tag1, _ = Tag.objects.get_or_create(
-            name="urgent",
-            defaults={"color": "#EF4444"}
+            name="urgent", defaults={"color": "#EF4444"}
         )
         self.tag2, _ = Tag.objects.get_or_create(
-            name="backend",
-            defaults={"color": "#3B82F6"}
+            name="backend", defaults={"color": "#3B82F6"}
         )
 
         # Create test project
@@ -65,9 +63,7 @@ class ChangelogTests(TestCase):
         }
 
         response = self.client.patch(
-            f"/api/projects/{self.project.id}/",
-            update_data,
-            format="json"
+            f"/api/projects/{self.project.id}/", update_data, format="json"
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -77,7 +73,9 @@ class ChangelogTests(TestCase):
         assert activity is not None
         assert activity.activity_type == "updated"
         assert activity.user == self.owner
-        assert "Updated Title" in activity.description or "title" in str(activity.changed_fields)
+        assert "Updated Title" in activity.description or "title" in str(
+            activity.changed_fields
+        )
 
     def test_activity_tracks_changed_fields(self):
         """Test that activity tracks which fields were changed"""
@@ -89,9 +87,7 @@ class ChangelogTests(TestCase):
         }
 
         response = self.client.patch(
-            f"/api/projects/{self.project.id}/",
-            update_data,
-            format="json"
+            f"/api/projects/{self.project.id}/", update_data, format="json"
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -108,9 +104,7 @@ class ChangelogTests(TestCase):
         # Update status
         update_data = {"status": "on_hold"}
         response = self.client.patch(
-            f"/api/projects/{self.project.id}/",
-            update_data,
-            format="json"
+            f"/api/projects/{self.project.id}/", update_data, format="json"
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -162,8 +156,7 @@ class ChangelogTests(TestCase):
 
         # Filter by activity type
         response = self.client.get(
-            f"/api/projects/{self.project.id}/changelog/",
-            {"activity_type": "updated"}
+            f"/api/projects/{self.project.id}/changelog/", {"activity_type": "updated"}
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -202,7 +195,7 @@ class ChangelogTests(TestCase):
             {
                 "start_date": str(start_date),
                 "end_date": str(today),
-            }
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -232,8 +225,7 @@ class ChangelogTests(TestCase):
 
         # Test custom page size
         response = self.client.get(
-            f"/api/projects/{self.project.id}/changelog/",
-            {"page_size": 10}
+            f"/api/projects/{self.project.id}/changelog/", {"page_size": 10}
         )
         assert response.status_code == status.HTTP_200_OK
         assert len(response.data["results"]) <= 10
@@ -300,9 +292,7 @@ class ChangelogTests(TestCase):
 
         update_data = {"title": "New Title"}
         self.client.patch(
-            f"/api/projects/{self.project.id}/",
-            update_data,
-            format="json"
+            f"/api/projects/{self.project.id}/", update_data, format="json"
         )
 
         activity = Activity.objects.filter(project=self.project).latest("created_at")

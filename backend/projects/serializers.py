@@ -265,7 +265,7 @@ class ActivitySerializer(serializers.ModelSerializer):
             "change_reason",
             "created_at",
         ]
-        read_only_fields = ["id","created_at"]
+        read_only_fields = ["id", "created_at"]
 
 
 class ProjectListSerializer(serializers.ModelSerializer):

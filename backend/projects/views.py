@@ -63,7 +63,15 @@ def capture_project_changes(instance, serializer):
     }
 
     # List of fields to track for projects
-    tracked_fields = ["title", "description", "status", "health", "progress", "start_date", "end_date"]
+    tracked_fields = [
+        "title",
+        "description",
+        "status",
+        "health",
+        "progress",
+        "start_date",
+        "end_date",
+    ]
 
     for field_name in tracked_fields:
         old_value = getattr(instance, field_name)
@@ -72,8 +80,12 @@ def capture_project_changes(instance, serializer):
         # Only record if the field was actually provided in the update
         if field_name in serializer.validated_data and old_value != new_value:
             changes["changed_fields"].append(field_name)
-            changes["previous_values"][field_name] = str(old_value) if old_value is not None else None
-            changes["new_values"][field_name] = str(new_value) if new_value is not None else None
+            changes["previous_values"][field_name] = (
+                str(old_value) if old_value is not None else None
+            )
+            changes["new_values"][field_name] = (
+                str(new_value) if new_value is not None else None
+            )
 
     return changes
 
@@ -121,7 +133,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
         """Instantiates and returns the list of permissions that this view requires."""
         if self.action in ["update", "partial_update"]:
             self.permission_classes = [IsAuthenticated, CanEditProject]
-        elif self.action in ["retrieve", "activities","changelog"]:
+        elif self.action in ["retrieve", "activities", "changelog"]:
             self.permission_classes = [IsAuthenticated, CanViewProjectDetails]
         elif self.action in [
             "soft_delete",
@@ -388,23 +400,23 @@ class ProjectViewSet(viewsets.ModelViewSet):
         activities = project.activities.all()[:20]
         serializer = ActivitySerializer(activities, many=True)
         return Response(serializer.data)
-    
+
     @action(detail=True, methods=["get"])
     def changelog(self, request, pk=None):
         """Get detailed changelog for a project with filtering and pagination functionality"""
         project = self.get_object()
-        
-        #query parameters for filtering and pagination
+
+        # query parameters for filtering and pagination
         activity_type = request.query_params.get("activity_type")
         user_id = request.query_params.get("user_id")
         start_date = request.query_params.get("start_date")
         end_date = request.query_params.get("end_date")
-        page= request.query_params.get("page", 1)
-        page_size= request.query_params.get("page_size", 20)
-        
-        # start with all activities inside this project 
+        page = request.query_params.get("page", 1)
+        page_size = request.query_params.get("page_size", 20)
+
+        # start with all activities inside this project
         activities = project.activities.all()
-        
+
         queryset = project.activities.all()
         if activity_type:
             queryset = queryset.filter(activity_type=activity_type)
@@ -412,24 +424,24 @@ class ProjectViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(user_id=user_id)
         if start_date:
             from django.utils.dateparse import parse_date
+
             parsed_start = parse_date(start_date)
             if parsed_start:
                 queryset = queryset.filter(created_at__date__gte=parsed_start)
         if end_date:
             from django.utils.dateparse import parse_date
+
             parsed_end = parse_date(end_date)
             if parsed_end:
                 queryset = queryset.filter(created_at__date__lte=parsed_end)
         from rest_framework.pagination import PageNumberPagination
+
         paginator = PageNumberPagination()
         paginator.page_size = min(int(page_size), 100)
         paginated_activities = paginator.paginate_queryset(queryset, request)
 
         serializer = ActivitySerializer(paginated_activities, many=True)
         return paginator.get_paginated_response(serializer.data)
-    
-
-
 
     @action(detail=False, methods=["post"])
     def bulk_update(self, request):
