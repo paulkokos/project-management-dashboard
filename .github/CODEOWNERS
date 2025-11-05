@@ -1,0 +1,37 @@
+# Code owners for this repository
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Global owners
+* @paulkokos
+
+# Frontend code
+/frontend/ @paulkokos
+/frontend/src/components/ @paulkokos
+/frontend/src/stores/ @paulkokos
+/frontend/src/pages/ @paulkokos
+/frontend/src/services/ @paulkokos
+/frontend/__tests__/ @paulkokos
+
+# Backend code
+/backend/ @paulkokos
+/backend/projects/ @paulkokos
+/backend/core/ @paulkokos
+/backend/websocket_service/ @paulkokos
+/backend/config/ @paulkokos
+
+# Infrastructure & DevOps
+/deployment/ @paulkokos
+/.github/ @paulkokos
+/docker-compose.yml @paulkokos
+/Dockerfile @paulkokos
+
+# Documentation
+/docs/ @paulkokos
+/*.md @paulkokos
+/.gitignore @paulkokos
+
+# Configuration files
+/pyproject.toml @paulkokos
+/package.json @paulkokos
+/tsconfig.json @paulkokos
+/vite.config.ts @paulkokos
