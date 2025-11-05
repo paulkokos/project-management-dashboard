@@ -12,10 +12,10 @@ interface ChangelogEntry {
     last_name: string;
   };
   description: string;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
   changed_fields: string[];
-  previous_values: Record<string, any>;
-  new_values: Record<string, any>;
+  previous_values: Record<string, unknown>;
+  new_values: Record<string, unknown>;
   created_at: string;
 }
 

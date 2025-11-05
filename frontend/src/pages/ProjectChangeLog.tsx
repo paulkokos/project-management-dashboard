@@ -9,7 +9,6 @@ import { useChangelogUpdates } from '@/hooks/useProjectUpdates';
 export default function ProjectChangeLog() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user } = useAuthStore();
   const projectId = id ? parseInt(id) : undefined;
 
   // Subscribe to real-time changelog updates
