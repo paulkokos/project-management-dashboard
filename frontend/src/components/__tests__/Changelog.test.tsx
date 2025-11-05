@@ -225,7 +225,7 @@ describe('Changelog Component', () => {
     render(<Changelog entries={mockEntries} />)
 
     // Should show formatted date (not exact match due to timezone/formatting)
-    const dateText = screen.getByText(/,/)
-    expect(dateText).toBeInTheDocument()
+    const dateText = screen.getAllByText(/,/)
+    expect(dateText.length).toBeGreaterThan(0)
   })
 })
