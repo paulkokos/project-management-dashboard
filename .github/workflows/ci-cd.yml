@@ -37,7 +37,7 @@ jobs:
         run: cd frontend && npm run build
 
       - name: Upload frontend coverage
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v5
         with:
           files: ./frontend/coverage/cobertura-coverage.xml
           flags: frontend
@@ -99,7 +99,7 @@ jobs:
           pytest --cov=projects --cov=core --cov-report=xml || true
 
       - name: Upload backend coverage
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v5
         with:
           files: ./backend/coverage.xml
           flags: backend
