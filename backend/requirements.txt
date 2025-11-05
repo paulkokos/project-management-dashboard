@@ -27,7 +27,7 @@ django-redis==5.4.0
 djangorestframework-simplejwt==5.5.1
 coreapi==2.3.3
 python-dateutil==2.8.2
-pytz==2024.1
+pytz==2025.2
 
 # Search & Full-text
 django-haystack==3.2.1
