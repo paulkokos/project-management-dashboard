@@ -31,7 +31,7 @@ pytz==2024.1
 
 # Search & Full-text
 django-haystack==3.3.0
-elasticsearch==8.14.0
+elasticsearch==9.2.0
 
 # Development & Utilities
 python-dotenv==1.0.1
