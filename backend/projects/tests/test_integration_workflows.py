@@ -41,13 +41,15 @@ class WorkflowIntegrationTests(TestCase):
         )
 
         # Create roles
-        self.role_lead = Role.objects.create(
-            key="lead", display_name="Lead", color="red"
+        self.role_lead, _ = Role.objects.get_or_create(
+            key="lead", defaults={"display_name": "Lead", "color": "red"}
         )
-        self.role_dev = Role.objects.create(
-            key="developer", display_name="Developer", color="blue"
+        self.role_dev, _ = Role.objects.get_or_create(
+            key="developer", defaults={"display_name": "Developer", "color": "blue"}
         )
-        self.role_qa = Role.objects.create(key="qa", display_name="QA", color="green")
+        self.role_qa, _ = Role.objects.get_or_create(
+            key="qa", defaults={"display_name": "QA", "color": "green"}
+        )
 
     # ============ PROJECT LIFECYCLE WORKFLOW ============
 

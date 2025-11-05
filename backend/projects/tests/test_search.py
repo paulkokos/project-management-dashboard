@@ -31,8 +31,12 @@ class TestSearchAPI(TestCase):
         )
 
         # Create roles
-        self.lead_role = Role.objects.create(name="Lead")
-        self.dev_role = Role.objects.create(name="Developer")
+        self.lead_role, _ = Role.objects.get_or_create(
+            key="lead", defaults={"display_name": "Lead"}
+        )
+        self.dev_role, _ = Role.objects.get_or_create(
+            key="developer", defaults={"display_name": "Developer"}
+        )
 
         # Create tags
         self.tag_mobile, _ = Tag.objects.get_or_create(name="mobile")

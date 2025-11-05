@@ -50,20 +50,20 @@ class PermissionTests(TestCase):
         )
 
         # Create roles with specific permissions
-        self.role_lead = Role.objects.create(
-            key="lead", display_name="Project Lead", color="red"
+        self.role_lead, _ = Role.objects.get_or_create(
+            key="lead", defaults={"display_name": "Project Lead", "color": "red"}
         )
-        self.role_manager = Role.objects.create(
-            key="manager", display_name="Manager", color="orange"
+        self.role_manager, _ = Role.objects.get_or_create(
+            key="manager", defaults={"display_name": "Manager", "color": "orange"}
         )
-        self.role_developer = Role.objects.create(
-            key="developer", display_name="Developer", color="blue"
+        self.role_developer, _ = Role.objects.get_or_create(
+            key="developer", defaults={"display_name": "Developer", "color": "blue"}
         )
-        self.role_qa = Role.objects.create(
-            key="qa", display_name="QA Engineer", color="green"
+        self.role_qa, _ = Role.objects.get_or_create(
+            key="qa", defaults={"display_name": "QA Engineer", "color": "green"}
         )
-        self.role_stakeholder = Role.objects.create(
-            key="stakeholder", display_name="Stakeholder", color="pink"
+        self.role_stakeholder, _ = Role.objects.get_or_create(
+            key="stakeholder", defaults={"display_name": "Stakeholder", "color": "pink"}
         )
 
         # Create test project
