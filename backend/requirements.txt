@@ -15,7 +15,7 @@ django-dbbackup==4.0.2
 channels==4.1.0
 channels-redis==4.1.0
 daphne==4.1.2
-python-socketio==5.11.0
+python-socketio==5.14.3
 python-engineio==4.9.0
 
 # Async & Background Tasks
