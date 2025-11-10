@@ -16,7 +16,7 @@ channels==4.3.1
 channels-redis==4.1.0
 daphne==4.1.2
 python-socketio==5.11.0
-python-engineio==4.9.0
+python-engineio==4.12.3
 
 # Async & Background Tasks
 celery==5.4.0
