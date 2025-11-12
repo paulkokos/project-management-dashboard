@@ -49,4 +49,4 @@ gunicorn==22.0.0
 whitenoise==6.7.0
 
 # Monitoring & Logging
-sentry-sdk==2.42.1
+sentry-sdk==2.44.0
