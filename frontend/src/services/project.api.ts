@@ -24,6 +24,8 @@ export const projectAPI = {
     api.post('/projects/empty_trash/'),
   activities: (id: number) =>
     api.get(`/projects/${id}/activities/`),
+  getChangelog: (id: number, params?: Record<string, unknown>) =>
+    api.get(`/projects/${id}/changelog/`, { params }),
   addTeamMember: (id: number, data: Record<string, unknown>) =>
     api.post(`/projects/${id}/add_team_member/`, data),
   removeTeamMember: (id: number, userId: number) =>

@@ -259,8 +259,13 @@ class ActivitySerializer(serializers.ModelSerializer):
             "user",
             "description",
             "metadata",
+            "changed_fields",
+            "previous_values",
+            "new_values",
+            "change_reason",
             "created_at",
         ]
+        read_only_fields = ["id", "created_at"]
 
 
 class ProjectListSerializer(serializers.ModelSerializer):

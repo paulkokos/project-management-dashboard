@@ -157,3 +157,36 @@ export function useAllProjectUpdates() {
     }
   }, [on, off, queryClient])
 }
+
+export function useChangelogUpdates(projectId?: number) {
+  const queryClient = useQueryClient()
+  const { subscribe, unsubscribe, on, off } = useWebSocket()
+
+  useEffect(() => {
+    if (!projectId) return
+
+    // Subscribe to this specific project
+    subscribe(projectId)
+
+    // Handler for activity/changelog updates
+    const handleActivityUpdate = (data: { project_id: number }) => {
+      if (data.project_id === projectId) {
+        // Invalidate changelog cache to refresh with new entry
+        queryClient.invalidateQueries({
+          queryKey: ['changelog', projectId.toString()],
+        })
+      }
+    }
+
+    // Subscribe to project activity events
+    on('project_activity', handleActivityUpdate)
+
+    return () => {
+      // Unsubscribe from specific project
+      unsubscribe(projectId)
+
+      // Remove event listeners
+      off('project_activity', handleActivityUpdate)
+    }
+  }, [projectId, subscribe, unsubscribe, on, off, queryClient])
+}

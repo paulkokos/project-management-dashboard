@@ -38,7 +38,9 @@ class TagModelTests(TestCase):
 
     def test_tag_creation(self):
         """Test that we can create a tag"""
-        tag, _ = Tag.objects.get_or_create(name="backend", defaults={"color": "#FF0000"})
+        tag, _ = Tag.objects.get_or_create(
+            name="backend", defaults={"color": "#FF0000"}
+        )
         assert tag.id is not None
         assert tag.name == "backend"
 
@@ -83,7 +85,8 @@ class ApplicationStructureTests(TestCase):
         """Verify serializers are available"""
         from projects import serializers
 
-        assert hasattr(serializers, "ProjectSerializer")
+        assert hasattr(serializers, "ProjectListSerializer")
+        assert hasattr(serializers, "ProjectDetailSerializer")
         assert hasattr(serializers, "TagSerializer")
 
     def test_views_exist(self):

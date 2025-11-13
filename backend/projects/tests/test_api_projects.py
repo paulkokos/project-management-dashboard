@@ -40,24 +40,22 @@ class ProjectAPITests(TestCase):
         )
 
         # Create roles
-        self.role_lead = Role.objects.create(
-            key="lead", display_name="Project Lead", color="red"
+        self.role_lead, _ = Role.objects.get_or_create(
+            key="lead", defaults={"display_name": "Project Lead", "color": "red"}
         )
-        self.role_developer = Role.objects.create(
-            key="developer", display_name="Developer", color="blue"
+        self.role_developer, _ = Role.objects.get_or_create(
+            key="developer", defaults={"display_name": "Developer", "color": "blue"}
         )
-        self.role_stakeholder = Role.objects.create(
-            key="stakeholder", display_name="Stakeholder", color="pink"
+        self.role_stakeholder, _ = Role.objects.get_or_create(
+            key="stakeholder", defaults={"display_name": "Stakeholder", "color": "pink"}
         )
 
         # Create tags
         self.backend_tag, _ = Tag.objects.get_or_create(
-            name="backend",
-            defaults={"color": "#3B82F6"}
+            name="backend", defaults={"color": "#3B82F6"}
         )
         self.frontend_tag, _ = Tag.objects.get_or_create(
-            name="frontend",
-            defaults={"color": "#10B981"}
+            name="frontend", defaults={"color": "#10B981"}
         )
 
         # Create test projects

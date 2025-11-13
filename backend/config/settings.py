@@ -13,8 +13,9 @@ from dotenv import load_dotenv
 
 try:
     from psycopg import IsolationLevel
+
     # Check if AUTOCOMMIT exists
-    if hasattr(IsolationLevel, 'AUTOCOMMIT'):
+    if hasattr(IsolationLevel, "AUTOCOMMIT"):
         PSYCOPG3 = True
     else:
         PSYCOPG3 = False

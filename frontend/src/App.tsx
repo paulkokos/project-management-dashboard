@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query'
 import Layout from '@/components/Layout'
@@ -5,6 +6,7 @@ import ProjectList from '@/pages/ProjectList'
 import ProjectDetail from '@/pages/ProjectDetail'
 import ProjectCreate from '@/pages/ProjectCreate'
 import ProjectEdit from '@/pages/ProjectEdit'
+import ProjectChangeLog from '@/pages/ProjectChangeLog'
 import DeletedProjects from '@/pages/DeletedProjects'
 import Dashboard from '@/pages/Dashboard'
 import Login from '@/pages/Login'
@@ -19,7 +21,13 @@ import { NotificationContainer } from '@/components/NotificationContainer'
 const queryClient = new QueryClient()
 
 function AppContent() {
-  const { isAuthenticated } = useAuthStore()
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
+  const checkAuth = useAuthStore((state) => state.checkAuth)
+
+  // Check authentication on app load
+  useEffect(() => {
+    checkAuth()
+  }, [checkAuth])
 
   // Initialize WebSocket connection when authenticated
   useWebSocket({ autoConnect: isAuthenticated })
@@ -45,6 +53,7 @@ function AppContent() {
         <Route path="/projects/deleted" element={<DeletedProjects />} />
         <Route path="/projects/:id" element={<ProjectDetail />} />
         <Route path="/projects/:id/edit" element={<ProjectEdit />} />
+        <Route path="/projects/:id/changelog" element={<ProjectChangeLog />} />
         <Route path="/search" element={<Search />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/login" element={<Navigate to="/" replace />} />

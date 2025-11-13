@@ -62,6 +62,7 @@ build/
 .env
 .env.local
 .env.*.local
+.npmrc
 
 # Docker
 .dockerignore

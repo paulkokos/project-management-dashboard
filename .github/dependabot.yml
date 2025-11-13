@@ -1,0 +1,132 @@
+version: 2
+updates:
+  # Enable version updates for npm packages (develop branch)
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    target-branch: "develop"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "03:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "paulkokos"
+    labels:
+      - "dependencies"
+      - "frontend"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    pull-request-branch-name:
+      separator: "/"
+
+  # Enable version updates for Python packages (develop branch)
+  - package-ecosystem: "pip"
+    directory: "/backend"
+    target-branch: "develop"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "03:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "paulkokos"
+    labels:
+      - "dependencies"
+      - "backend"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    pull-request-branch-name:
+      separator: "/"
+
+  # Enable security updates for GitHub Actions (develop branch)
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    target-branch: "develop"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+    reviewers:
+      - "paulkokos"
+    labels:
+      - "dependencies"
+      - "ci-cd"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+
+  # Enable version updates for Docker (develop branch)
+  - package-ecosystem: "docker"
+    directory: "/deployment/docker"
+    target-branch: "develop"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:30"
+    reviewers:
+      - "paulkokos"
+    labels:
+      - "dependencies"
+      - "docker"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+
+  # Security-only updates for main branch (npm)
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    target-branch: "main"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "03:00"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "paulkokos"
+    labels:
+      - "dependencies"
+      - "frontend"
+      - "security"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+
+  # Security-only updates for main branch (pip)
+  - package-ecosystem: "pip"
+    directory: "/backend"
+    target-branch: "main"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "03:30"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "paulkokos"
+    labels:
+      - "dependencies"
+      - "backend"
+      - "security"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+
+  # Security-only updates for main branch (docker)
+  - package-ecosystem: "docker"
+    directory: "/deployment/docker"
+    target-branch: "main"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "04:30"
+    open-pull-requests-limit: 2
+    reviewers:
+      - "paulkokos"
+    labels:
+      - "dependencies"
+      - "docker"
+      - "security"
+    commit-message:
+      prefix: "chore"
+      include: "scope"

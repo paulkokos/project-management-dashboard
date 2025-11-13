@@ -10,8 +10,12 @@ function getWebSocketUrl(): string {
   // Get the host - strip protocol if it was included in VITE_WS_URL
   let host = import.meta.env.VITE_WS_URL || window.location.host
 
-  // Remove protocol if it was included (http:// or https://)
-  if (host.startsWith('http://')) {
+  // Remove protocol if it was included (http://, https://, or ws://)
+  if (host.startsWith('ws://')) {
+    host = host.replace('ws://', '')
+  } else if (host.startsWith('wss://')) {
+    host = host.replace('wss://', '')
+  } else if (host.startsWith('http://')) {
     host = host.replace('http://', '')
   } else if (host.startsWith('https://')) {
     host = host.replace('https://', '')

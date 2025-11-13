@@ -305,7 +305,9 @@ class Activity(BaseModel):
         ("team_added", "Team Member Added"),
         ("team_removed", "Team Member Removed"),
         ("milestone_added", "Milestone Added"),
+        ("milestone_updated", "Milestone Updated"),
         ("milestone_completed", "Milestone Completed"),
+        ("milestone_deleted", "Milestone Deleted"),
         ("progress_updated", "Progress Updated"),
         ("comment_added", "Comment Added"),
         ("restored", "Project Restored"),
@@ -320,10 +322,31 @@ class Activity(BaseModel):
     description = models.TextField()
     metadata = models.JSONField(default=dict, blank=True)  # Store additional data
 
+    changed_fields = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="List of fields that were changed (if applicable)",
+    )
+    previous_values = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Previous values of changed fields (if applicable)",
+    )
+    new_values = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="New values of changed fields (if applicable)",
+    )
+    change_reason = models.TextField(
+        blank=True,
+        help_text="Reason for the change (if provided)",
+    )
+
     class Meta:
         ordering = ["-created_at"]
         indexes = [
             models.Index(fields=["project", "-created_at"]),
+            models.Index(fields=["user", "activity_type"]),
         ]
 
     def __str__(self):
