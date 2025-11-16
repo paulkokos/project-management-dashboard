@@ -95,7 +95,7 @@ export default function Layout({ children }: LayoutProps) {
       <footer className="bg-gray-50 border-t border-gray-200 mt-12">
         <div className="max-w-7xl mx-auto px-4 py-8">
           <p className="text-center text-gray-600">
-            © 2024 Project Management Dashboard. All rights reserved.
+            © 2025 Project Management Dashboard. All rights reserved.
           </p>
         </div>
       </footer>
