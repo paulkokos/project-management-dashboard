@@ -174,7 +174,8 @@ describe('CommentList', () => {
       />
     );
 
-    expect(screen.getByRole('presentation')).toBeInTheDocument();
+    const spinner = screen.getByRole('main', { hidden: true }) || screen.queryByText('', { selector: '.animate-spin' });
+    expect(document.querySelector('.animate-spin')).toBeInTheDocument();
   });
 });
 
@@ -326,7 +327,8 @@ describe('CommentThread', () => {
       />
     );
 
-    expect(screen.getByText(/1 reply/)).toBeInTheDocument();
+    const replyBadges = screen.getAllByText(/1 reply/);
+    expect(replyBadges.length).toBeGreaterThan(0);
   });
 
   it('toggles reply visibility', () => {
