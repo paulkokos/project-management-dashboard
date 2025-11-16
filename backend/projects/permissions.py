@@ -58,3 +58,36 @@ class IsProjectOwner(BasePermission):
 
     def has_object_permission(self, request, view, obj):
         return obj.owner == request.user or request.user.is_superuser
+
+
+class CanViewProjectComments(BasePermission):
+    """
+    Allows viewing comments only to users who can view the project.
+    """
+
+    def has_permission(self, request, view):
+        # Get the project_id from the URL or query parameters
+        project_id = view.kwargs.get("project_id") or request.query_params.get("project_id")
+        if not project_id:
+            return False
+
+        from .models import Project
+        try:
+            project = Project.objects.get(id=project_id)
+            return can_view_project_details(request.user, project)
+        except Project.DoesNotExist:
+            return False
+
+
+class IsCommentAuthorOrAdmin(BasePermission):
+    """
+    Allows editing/deleting comments only to the author or admins.
+    """
+
+    def has_object_permission(self, request, view, obj):
+        # Read permissions allowed to anyone who can view the project
+        if request.method in SAFE_METHODS:
+            return can_view_project_details(request.user, obj.project)
+
+        # Write permissions only for author or admin
+        return obj.author == request.user or request.user.is_superuser

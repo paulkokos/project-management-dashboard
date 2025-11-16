@@ -23,6 +23,7 @@ from websocket_service.channels_broadcast import (
 
 from .models import (
     Activity,
+    Comment,
     Milestone,
     Project,
     ProjectBulkOperation,
@@ -33,12 +34,17 @@ from .models import (
 from .permissions import (
     CanEditProject,
     CanViewProjectDetails,
+    CanViewProjectComments,
+    IsCommentAuthorOrAdmin,
     IsProjectOwner,
     can_view_project_details,
 )
 from .serializers import (
     ActivitySerializer,
     BulkUpdateSerializer,
+    CommentCreateUpdateSerializer,
+    CommentDetailSerializer,
+    CommentListSerializer,
     MilestoneSerializer,
     ProjectBulkOperationSerializer,
     ProjectCreateUpdateSerializer,
@@ -853,3 +859,89 @@ class MilestoneViewSet(viewsets.ModelViewSet):
 
         serializer = self.get_serializer(milestone)
         return Response(serializer.data)
+
+
+class CommentViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for managing project comments.
+
+    Supports:
+    - List comments (with filtering and pagination)
+    - Create new comments
+    - Retrieve single comment with nested replies
+    - Update comment (author only)
+    - Delete comment (soft delete, author only)
+    - Query optimization with select_related and prefetch_related
+    """
+
+    queryset = Comment.objects.select_related("author", "project").prefetch_related("replies")
+    permission_classes = [IsAuthenticated, CanViewProjectComments, IsCommentAuthorOrAdmin]
+    filter_backends = [DjangoFilterBackend, OrderingFilter]
+    filterset_fields = ["project_id", "parent_comment"]
+    ordering_fields = ["created_at"]
+    ordering = ["-created_at"]
+    pagination_class = None  # Implement if needed
+
+    def get_serializer_class(self):
+        """Return appropriate serializer based on action"""
+        if self.action == "list":
+            return CommentListSerializer
+        elif self.action == "retrieve":
+            return CommentDetailSerializer
+        return CommentCreateUpdateSerializer
+
+    def get_queryset(self):
+        """Filter comments by project if provided"""
+        queryset = super().get_queryset()
+
+        # Filter by project if project_id is in kwargs or query params
+        project_id = self.kwargs.get("project_id") or self.request.query_params.get("project_id")
+        if project_id:
+            queryset = queryset.filter(project_id=project_id)
+
+        # Only return non-deleted comments for list/retrieve
+        if self.action in ["list", "retrieve"]:
+            queryset = queryset.filter(deleted_at__isnull=True)
+
+        return queryset
+
+    def perform_create(self, serializer):
+        """Create comment and log activity"""
+        comment = serializer.save(author=self.request.user)
+
+        # Log activity
+        Activity.objects.create(
+            project=comment.project,
+            activity_type="comment_added",
+            user=self.request.user,
+            description=f"Added comment: {comment.content[:100]}...",
+            metadata={"comment_id": comment.id},
+        )
+
+    def perform_update(self, serializer):
+        """Update comment and track edit"""
+        comment = serializer.instance
+        serializer.save()
+        comment.mark_edited()
+
+        # Log activity
+        Activity.objects.create(
+            project=comment.project,
+            activity_type="comment_added",  # Using same type for edit
+            user=self.request.user,
+            description=f"Edited comment: {comment.content[:100]}...",
+            metadata={"comment_id": comment.id, "edit": True},
+        )
+
+    def perform_destroy(self, instance):
+        """Soft delete comment"""
+        instance.soft_delete()
+
+        # Log activity
+        Activity.objects.create(
+            project=instance.project,
+            activity_type="comment_added",  # Using same type for delete
+            user=self.request.user,
+            description=f"Deleted comment",
+            metadata={"comment_id": instance.id, "deleted": True},
+        )
