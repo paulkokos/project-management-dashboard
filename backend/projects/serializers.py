@@ -12,6 +12,7 @@ from .models import (
     ProjectBulkOperation,
     Role,
     Tag,
+    Task,
     TeamMember,
 )
 
@@ -273,7 +274,8 @@ class ProjectListSerializer(serializers.ModelSerializer):
 
     This serializer provides a more lightweight representation of a project,
     suitable for list views. It includes several calculated fields for
-    displaying summary information.
+    displaying summary information. Uses annotated counts from queryset to
+    prevent N+1 queries.
     """
 
     owner = UserSimpleSerializer(read_only=True)
@@ -310,16 +312,25 @@ class ProjectListSerializer(serializers.ModelSerializer):
         ]
 
     def get_team_count(self, obj):
-        """Returns the number of team members on the project."""
+        """Returns the number of team members on the project.
+        Uses annotated value from queryset if available to avoid N+1 queries."""
+        if hasattr(obj, "team_member_count"):
+            return obj.team_member_count
         return obj.team_members.count()
 
     def get_milestone_count(self, obj):
-        """Returns the total number of milestones for the project."""
-        return obj.milestone_count
+        """Returns the total number of milestones for the project.
+        Uses annotated value from queryset if available to avoid N+1 queries."""
+        if hasattr(obj, "milestone_count") and isinstance(obj.milestone_count, int):
+            return obj.milestone_count
+        return obj.milestones.count()
 
     def get_completed_milestone_count(self, obj):
-        """Returns the number of completed milestones."""
-        return obj.completed_milestone_count
+        """Returns the number of completed milestones.
+        Calculates from prefetched milestones to avoid additional queries."""
+        if hasattr(obj, "milestones"):
+            return sum(1 for m in obj.milestones.all() if m.progress == 100)
+        return obj.milestones.filter(progress=100).count()
 
     def get_days_until_deadline(self, obj):
         """Returns the number of days until the project deadline."""
@@ -514,3 +525,179 @@ class BulkUpdateSerializer(serializers.Serializer):
     )
     tags = serializers.ListField(child=serializers.IntegerField(), required=False)
     etag = serializers.CharField(required=False)
+
+
+class TaskCreateUpdateSerializer(serializers.ModelSerializer):
+    """Serializer for creating and updating tasks.
+
+    Validates task content and ensures users can only create/update tasks
+    they have permission for.
+    """
+
+    assigned_to_id = serializers.IntegerField(
+        required=False, allow_null=True, write_only=True
+    )
+
+    class Meta:
+        model = Task
+        fields = [
+            "id",
+            "title",
+            "description",
+            "status",
+            "priority",
+            "assigned_to_id",
+            "progress",
+            "estimated_hours",
+            "actual_hours",
+            "due_date",
+            "start_date",
+            "parent_task",
+            "milestone",
+            "tags",
+        ]
+        read_only_fields = ["id"]
+
+    def validate_title(self, value):
+        """Ensure title is not empty and has reasonable length."""
+        if not value or not value.strip():
+            raise serializers.ValidationError("Title cannot be empty")
+        if len(value) > 255:
+            raise serializers.ValidationError("Title cannot exceed 255 characters")
+        return value.strip()
+
+    def validate_progress(self, value):
+        """Validate progress is between 0 and 100."""
+        if not (0 <= value <= 100):
+            raise serializers.ValidationError(
+                "Progress must be between 0 and 100"
+            )
+        return value
+
+    def validate_estimated_hours(self, value):
+        """Validate estimated hours is positive."""
+        if value is not None and value < 0:
+            raise serializers.ValidationError("Estimated hours cannot be negative")
+        return value
+
+    def validate_actual_hours(self, value):
+        """Validate actual hours is positive."""
+        if value is not None and value < 0:
+            raise serializers.ValidationError("Actual hours cannot be negative")
+        return value
+
+    def validate(self, data):
+        """Validate task data."""
+        # Check if parent task is not deleted and exists
+        parent_task = data.get("parent_task")
+        if parent_task and parent_task.deleted_at is not None:
+            raise serializers.ValidationError(
+                {"parent_task": "Parent task has been deleted"}
+            )
+
+        # Check if milestone exists and is not deleted
+        milestone = data.get("milestone")
+        if milestone and milestone.deleted_at is not None:
+            raise serializers.ValidationError(
+                {"milestone": "Milestone has been deleted"}
+            )
+
+        return data
+
+    def create(self, validated_data):
+        """Create a new task."""
+        # Extract assigned_to_id and handle separately
+        assigned_to_id = validated_data.pop("assigned_to_id", None)
+
+        task = Task.objects.create(**validated_data)
+
+        if assigned_to_id:
+            task.assigned_to_id = assigned_to_id
+            task.save()
+
+        return task
+
+
+class TaskListSerializer(serializers.ModelSerializer):
+    """Serializer for listing tasks with summary information."""
+
+    assigned_to = UserSimpleSerializer(read_only=True)
+    project_id = serializers.IntegerField(source="project.id", read_only=True)
+    project_title = serializers.CharField(source="project.title", read_only=True)
+    milestone_title = serializers.CharField(
+        source="milestone.title", read_only=True, allow_null=True
+    )
+    subtask_count = serializers.IntegerField(read_only=True)
+    completed_subtask_count = serializers.IntegerField(read_only=True)
+    is_overdue = serializers.BooleanField(read_only=True)
+    days_until_due = serializers.IntegerField(read_only=True, allow_null=True)
+
+    class Meta:
+        model = Task
+        fields = [
+            "id",
+            "title",
+            "status",
+            "priority",
+            "assigned_to",
+            "progress",
+            "project_id",
+            "project_title",
+            "milestone_title",
+            "due_date",
+            "start_date",
+            "subtask_count",
+            "completed_subtask_count",
+            "is_overdue",
+            "days_until_due",
+            "created_at",
+            "updated_at",
+        ]
+
+
+class TaskDetailSerializer(serializers.ModelSerializer):
+    """Serializer for detailed task view with nested subtasks and full information."""
+
+    assigned_to = UserSimpleSerializer(read_only=True)
+    project = serializers.StringRelatedField(read_only=True)
+    milestone = serializers.StringRelatedField(read_only=True, allow_null=True)
+    parent_task = serializers.StringRelatedField(read_only=True, allow_null=True)
+    subtasks = serializers.SerializerMethodField(read_only=True)
+    tags = serializers.StringRelatedField(many=True, read_only=True)
+    is_overdue = serializers.BooleanField(read_only=True)
+    days_until_due = serializers.IntegerField(read_only=True, allow_null=True)
+    subtask_count = serializers.IntegerField(read_only=True)
+    completed_subtask_count = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = Task
+        fields = [
+            "id",
+            "title",
+            "description",
+            "status",
+            "priority",
+            "assigned_to",
+            "progress",
+            "estimated_hours",
+            "actual_hours",
+            "due_date",
+            "start_date",
+            "completed_at",
+            "project",
+            "milestone",
+            "parent_task",
+            "subtasks",
+            "tags",
+            "is_overdue",
+            "days_until_due",
+            "subtask_count",
+            "completed_subtask_count",
+            "created_at",
+            "updated_at",
+        ]
+
+    def get_subtasks(self, obj):
+        """Get nested subtasks with basic information."""
+        subtasks = obj.subtasks.filter(deleted_at__isnull=True)
+        return TaskListSerializer(subtasks, many=True).data

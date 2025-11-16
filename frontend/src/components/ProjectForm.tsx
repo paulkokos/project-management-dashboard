@@ -1,19 +1,15 @@
-import { useState, ChangeEvent, FormEvent } from 'react'
-import { useMutation, useQuery } from '@tanstack/react-query'
-import { projectAPI, tagAPI } from '@/services'
-import { Project, Tag } from '@/types'
+import { useState, ChangeEvent, FormEvent } from 'react';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { projectAPI, tagAPI } from '@/services';
+import { Project, Tag } from '@/types';
 
 interface ProjectFormProps {
-  project?: Project
-  onSuccess?: () => void
-  onCancel?: () => void
+  project?: Project;
+  onSuccess?: () => void;
+  onCancel?: () => void;
 }
 
-export default function ProjectForm({
-  project,
-  onSuccess,
-  onCancel,
-}: ProjectFormProps) {
+export default function ProjectForm({ project, onSuccess, onCancel }: ProjectFormProps) {
   const [formData, setFormData] = useState({
     title: project?.title || '',
     description: project?.description || '',
@@ -23,45 +19,41 @@ export default function ProjectForm({
     start_date: project?.start_date || '',
     end_date: project?.end_date || '',
     tag_ids: project?.tags?.map((t) => t.id) || [],
-  })
+  });
 
-  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Fetch tags
   const { data: tagsData } = useQuery({
     queryKey: ['tags'],
     queryFn: () => tagAPI.list(),
-  })
+  });
 
-  const tags = tagsData?.data?.results || []
+  const tags = tagsData?.data?.results || [];
 
   // Create/Update mutation
   const mutation = useMutation({
     mutationFn: (data: typeof formData) =>
-      project
-        ? projectAPI.patch(project.id, data)
-        : projectAPI.create(data),
+      project ? projectAPI.patch(project.id, data) : projectAPI.create(data),
     onSuccess: () => {
-      onSuccess?.()
+      onSuccess?.();
     },
     onError: (error: unknown) => {
-      const apiError = error as { response?: { data?: Record<string, string> } }
-      setErrors(apiError.response?.data || { general: 'An error occurred' })
+      const apiError = error as { response?: { data?: Record<string, string> } };
+      setErrors(apiError.response?.data || { general: 'An error occurred' });
     },
-  })
+  });
 
   const handleChange = (
-    e: ChangeEvent<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >
+    e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
-    const { name, value } = e.target
+    const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
       [name]: name === 'progress' ? parseInt(value) : value,
-    }))
-    setErrors((prev) => ({ ...prev, [name]: '' }))
-  }
+    }));
+    setErrors((prev) => ({ ...prev, [name]: '' }));
+  };
 
   const handleTagToggle = (tagId: number) => {
     setFormData((prev) => ({
@@ -69,28 +61,28 @@ export default function ProjectForm({
       tag_ids: prev.tag_ids.includes(tagId)
         ? prev.tag_ids.filter((id) => id !== tagId)
         : [...prev.tag_ids, tagId],
-    }))
-  }
+    }));
+  };
 
   const handleSubmit = (e: FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     // Validation
     if (!formData.title.trim()) {
-      setErrors({ title: 'Title is required' })
-      return
+      setErrors({ title: 'Title is required' });
+      return;
     }
 
     // Remove empty date fields so they don't get cleared on update
-    const { start_date, end_date, ...submitData } = formData
+    const { start_date, end_date, ...submitData } = formData;
     const finalData = {
       ...submitData,
       ...(start_date ? { start_date } : { start_date: '' }),
       ...(end_date ? { end_date } : { end_date: '' }),
-    } as typeof formData
+    } as typeof formData;
 
-    mutation.mutate(finalData)
-  }
+    mutation.mutate(finalData);
+  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -110,15 +102,11 @@ export default function ProjectForm({
           className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
           placeholder="Project title"
         />
-        {errors.title && (
-          <p className="mt-1 text-sm text-red-600">{errors.title}</p>
-        )}
+        {errors.title && <p className="mt-1 text-sm text-red-600">{errors.title}</p>}
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700">
-          Description
-        </label>
+        <label className="block text-sm font-medium text-gray-700">Description</label>
         <textarea
           name="description"
           value={formData.description}
@@ -131,9 +119,7 @@ export default function ProjectForm({
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Status
-          </label>
+          <label className="block text-sm font-medium text-gray-700">Status</label>
           <select
             name="status"
             value={formData.status}
@@ -148,9 +134,7 @@ export default function ProjectForm({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Health
-          </label>
+          <label className="block text-sm font-medium text-gray-700">Health</label>
           <select
             name="health"
             value={formData.health}
@@ -181,9 +165,7 @@ export default function ProjectForm({
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Start Date
-          </label>
+          <label className="block text-sm font-medium text-gray-700">Start Date</label>
           <input
             type="date"
             name="start_date"
@@ -194,9 +176,7 @@ export default function ProjectForm({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">
-            End Date
-          </label>
+          <label className="block text-sm font-medium text-gray-700">End Date</label>
           <input
             type="date"
             name="end_date"
@@ -208,9 +188,7 @@ export default function ProjectForm({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Tags
-        </label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Tags</label>
         <div className="flex flex-wrap gap-2">
           {tags.map((tag: Tag) => (
             <button
@@ -222,11 +200,7 @@ export default function ProjectForm({
                   ? 'bg-blue-600 text-white'
                   : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
               }`}
-              style={
-                formData.tag_ids.includes(tag.id)
-                  ? { backgroundColor: tag.color }
-                  : {}
-              }
+              style={formData.tag_ids.includes(tag.id) ? { backgroundColor: tag.color } : {}}
             >
               {tag.name}
             </button>
@@ -240,11 +214,7 @@ export default function ProjectForm({
           disabled={mutation.isPending}
           className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-md font-medium hover:bg-blue-700 disabled:opacity-50"
         >
-          {mutation.isPending
-            ? 'Saving...'
-            : project
-              ? 'Update Project'
-              : 'Create Project'}
+          {mutation.isPending ? 'Saving...' : project ? 'Update Project' : 'Create Project'}
         </button>
         {onCancel && (
           <button
@@ -257,5 +227,5 @@ export default function ProjectForm({
         )}
       </div>
     </form>
-  )
+  );
 }

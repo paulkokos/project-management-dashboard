@@ -1,46 +1,46 @@
-import { useEffect, useCallback } from 'react'
-import { wsService } from '@/services/websocket'
+import { useEffect, useCallback } from 'react';
+import { wsService } from '@/services/websocket';
 
 interface WebSocketOptions {
-  autoConnect?: boolean
+  autoConnect?: boolean;
 }
 
 export function useWebSocket(options: WebSocketOptions = {}) {
-  const { autoConnect = true } = options
+  const { autoConnect = true } = options;
 
   useEffect(() => {
-    if (!autoConnect) return
+    if (!autoConnect) return;
 
-    const token = localStorage.getItem('access_token')
-    if (!token) return
+    const token = localStorage.getItem('access_token');
+    if (!token) return;
 
     // Connect to WebSocket if not already connected
     if (!wsService.isConnected()) {
       wsService.connect(token).catch(() => {
         // Connection failed silently
-      })
+      });
     }
 
     return () => {
       // Don't disconnect on unmount as other components might be using it
-    }
-  }, [autoConnect])
+    };
+  }, [autoConnect]);
 
   const subscribe = useCallback((projectId: number) => {
-    wsService.subscribe(projectId)
-  }, [])
+    wsService.subscribe(projectId);
+  }, []);
 
   const unsubscribe = useCallback((projectId: number) => {
-    wsService.unsubscribe(projectId)
-  }, [])
+    wsService.unsubscribe(projectId);
+  }, []);
 
   const on = useCallback((event: string, callback: (data: unknown) => void) => {
-    wsService.on(event, callback)
-  }, [])
+    wsService.on(event, callback);
+  }, []);
 
   const off = useCallback((event: string, callback: (data: unknown) => void) => {
-    wsService.off(event, callback)
-  }, [])
+    wsService.off(event, callback);
+  }, []);
 
   return {
     subscribe,
@@ -48,5 +48,5 @@ export function useWebSocket(options: WebSocketOptions = {}) {
     on,
     off,
     isConnected: wsService.isConnected(),
-  }
+  };
 }

@@ -58,3 +58,52 @@ class IsProjectOwner(BasePermission):
 
     def has_object_permission(self, request, view, obj):
         return obj.owner == request.user or request.user.is_superuser
+
+
+class CanViewProjectTasks(BasePermission):
+    """
+    Allows view access to tasks in projects the user has access to.
+    """
+
+    def has_object_permission(self, request, view, obj):
+        return can_view_project_details(request.user, obj.project)
+
+
+class CanEditTask(BasePermission):
+    """
+    Allows edit access to tasks:
+    - Admins can edit all tasks
+    - Task assignee can edit their assigned tasks
+    - Project owner and leads can edit all project tasks
+    """
+
+    def has_object_permission(self, request, view, obj):
+        if request.method in SAFE_METHODS:
+            return can_view_project_details(request.user, obj.project)
+
+        if request.user.is_superuser:
+            return True
+
+        # Project owner can edit all tasks
+        if obj.project.owner == request.user:
+            return True
+
+        # Assignee can edit their task
+        if obj.assigned_to == request.user:
+            return True
+
+        # Check if user is a lead/manager on the project
+        try:
+            team_member = TeamMember.objects.get(project=obj.project, user=request.user)
+            return team_member.role.key in ["lead", "manager"]
+        except TeamMember.DoesNotExist:
+            return False
+
+
+class IsTaskAssigneeOrAdmin(BasePermission):
+    """
+    Allows access only to task assignee or admin.
+    """
+
+    def has_object_permission(self, request, view, obj):
+        return obj.assigned_to == request.user or request.user.is_superuser
