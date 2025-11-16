@@ -1,19 +1,19 @@
-import { ReactNode } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { useAuthStore } from '@/stores/authStore'
+import { ReactNode } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuthStore } from '@/stores/authStore';
 
 interface LayoutProps {
-  children: ReactNode
+  children: ReactNode;
 }
 
 export default function Layout({ children }: LayoutProps) {
-  const navigate = useNavigate()
-  const { logout, user } = useAuthStore()
+  const navigate = useNavigate();
+  const { logout, user } = useAuthStore();
 
   const handleLogout = () => {
-    logout()
-    navigate('/login')
-  }
+    logout();
+    navigate('/login');
+  };
 
   return (
     <div className="container-app">
@@ -21,10 +21,7 @@ export default function Layout({ children }: LayoutProps) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
-              <Link
-                to="/"
-                className="flex items-center space-x-2 hover:text-blue-600"
-              >
+              <Link to="/" className="flex items-center space-x-2 hover:text-blue-600">
                 <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
                   <span className="text-white font-bold">PM</span>
                 </div>
@@ -44,12 +41,7 @@ export default function Layout({ children }: LayoutProps) {
                 to="/search"
                 className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium flex items-center"
               >
-                <svg
-                  className="w-4 h-4 mr-1"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
+                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -98,9 +90,7 @@ export default function Layout({ children }: LayoutProps) {
         </div>
       </nav>
 
-      <main className="main-content max-w-7xl mx-auto w-full px-4 py-8">
-        {children}
-      </main>
+      <main className="main-content max-w-7xl mx-auto w-full px-4 py-8">{children}</main>
 
       <footer className="bg-gray-50 border-t border-gray-200 mt-12">
         <div className="max-w-7xl mx-auto px-4 py-8">
@@ -110,5 +100,5 @@ export default function Layout({ children }: LayoutProps) {
         </div>
       </footer>
     </div>
-  )
+  );
 }

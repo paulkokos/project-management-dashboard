@@ -1,92 +1,92 @@
-import { useState, useMemo } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { projectAPI, userAPI, roleAPI } from '@/services'
-import { TeamMember, User } from '@/types'
+import { useState, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { projectAPI, userAPI, roleAPI } from '@/services';
+import { TeamMember, User } from '@/types';
 
 interface TeamMemberManagerProps {
-  projectId: number
-  initialMembers?: TeamMember[]
-  onMembersChange?: (members: TeamMember[]) => void
+  projectId: number;
+  initialMembers?: TeamMember[];
+  onMembersChange?: (members: TeamMember[]) => void;
 }
 
 interface EditingMember {
-  memberId: number
-  userId: number
-  currentRoleId: number
-  currentCapacity: number
+  memberId: number;
+  userId: number;
+  currentRoleId: number;
+  currentCapacity: number;
 }
 
 interface AddingMember {
-  isOpen: boolean
+  isOpen: boolean;
 }
 
-const ROLES = ['lead', 'developer', 'designer', 'qa', 'manager', 'stakeholder'] as const
+const ROLES = ['lead', 'developer', 'designer', 'qa', 'manager', 'stakeholder'] as const;
 
 export const TeamMemberManager = ({
   projectId,
   initialMembers = [],
   onMembersChange,
 }: TeamMemberManagerProps) => {
-  const [members, setMembers] = useState<TeamMember[]>(initialMembers)
-  const [addingMember, setAddingMember] = useState<AddingMember>({ isOpen: false })
+  const [members, setMembers] = useState<TeamMember[]>(initialMembers);
+  const [addingMember, setAddingMember] = useState<AddingMember>({ isOpen: false });
   const [newMember, setNewMember] = useState<{
-    userId: string
-    role: typeof ROLES[number]
-    capacity: number | string
+    userId: string;
+    role: (typeof ROLES)[number];
+    capacity: number | string;
   }>({
     userId: '',
     role: 'developer',
     capacity: 100,
-  })
-  const [editingMember, setEditingMember] = useState<EditingMember | null>(null)
+  });
+  const [editingMember, setEditingMember] = useState<EditingMember | null>(null);
   const [editForm, setEditForm] = useState<{
-    roleId: number
-    capacity: number | string
+    roleId: number;
+    capacity: number | string;
   }>({
     roleId: 0,
     capacity: 0,
-  })
-  const queryClient = useQueryClient()
+  });
+  const queryClient = useQueryClient();
 
   // Fetch available users
   const { data: usersResponse, isLoading: usersLoading } = useQuery({
     queryKey: ['users'],
     queryFn: () => userAPI.list(),
-  })
+  });
 
   // Fetch available roles
   const { data: rolesResponse } = useQuery({
     queryKey: ['roles'],
     queryFn: () => roleAPI.list(),
-  })
+  });
 
   const availableUsers = useMemo(() => {
-    const data = usersResponse?.data
+    const data = usersResponse?.data;
     if (Array.isArray(data)) {
-      return data
+      return data;
     }
     if (data?.results && Array.isArray(data.results)) {
-      return data.results
+      return data.results;
     }
-    return []
-  }, [usersResponse])
+    return [];
+  }, [usersResponse]);
 
   const availableRoles = useMemo(() => {
-    const data = rolesResponse?.data
+    const data = rolesResponse?.data;
     if (Array.isArray(data)) {
-      return data
+      return data;
     }
     if (data?.results && Array.isArray(data.results)) {
-      return data.results
+      return data.results;
     }
-    return []
-  }, [rolesResponse])
+    return [];
+  }, [rolesResponse]);
 
   // Get users not already in team
   const unassignedUsers = useMemo(() => {
-    const memberUserIds = new Set(members.map(m => m.user.id))
-    return availableUsers.filter((user: User) => !memberUserIds.has(user.id))
-  }, [availableUsers, members])
+    const memberUserIds = new Set(members.map((m) => m.user.id));
+    return availableUsers.filter((user: User) => !memberUserIds.has(user.id));
+  }, [availableUsers, members]);
 
   // Add team member
   const addMemberM = useMutation({
@@ -97,34 +97,34 @@ export const TeamMemberManager = ({
         capacity: data.capacity,
       }),
     onSuccess: (response) => {
-      const newMemberData = response.data
-      const updated = [...members, newMemberData]
-      setMembers(updated)
-      onMembersChange?.(updated)
+      const newMemberData = response.data;
+      const updated = [...members, newMemberData];
+      setMembers(updated);
+      onMembersChange?.(updated);
 
       // Reset form and close modal
       setNewMember({
         userId: '',
         role: 'developer',
         capacity: 100,
-      })
-      setAddingMember({ isOpen: false })
+      });
+      setAddingMember({ isOpen: false });
 
       // Invalidate project query
-      queryClient.invalidateQueries({ queryKey: ['project', projectId.toString()] })
+      queryClient.invalidateQueries({ queryKey: ['project', projectId.toString()] });
     },
-  })
+  });
 
   // Remove team member
   const removeMemberM = useMutation({
     mutationFn: (userId: number) => projectAPI.removeTeamMember(projectId, userId),
     onSuccess: (_, userId) => {
-      const updated = members.filter((m) => m.user.id !== userId)
-      setMembers(updated)
-      onMembersChange?.(updated)
-      queryClient.invalidateQueries({ queryKey: ['project', projectId.toString()] })
+      const updated = members.filter((m) => m.user.id !== userId);
+      setMembers(updated);
+      onMembersChange?.(updated);
+      queryClient.invalidateQueries({ queryKey: ['project', projectId.toString()] });
     },
-  })
+  });
 
   // Update team member
   const updateMemberM = useMutation({
@@ -135,76 +135,83 @@ export const TeamMemberManager = ({
         ...(data.capacity !== undefined && { capacity: data.capacity }),
       }),
     onSuccess: (response) => {
-      const updatedMemberData = response.data
+      const updatedMemberData = response.data;
       const updated = members.map((m) =>
         m.user.id === updatedMemberData.user.id ? updatedMemberData : m
-      )
-      setMembers(updated)
-      onMembersChange?.(updated)
-      setEditingMember(null)
-      queryClient.invalidateQueries({ queryKey: ['project', projectId.toString()] })
+      );
+      setMembers(updated);
+      onMembersChange?.(updated);
+      setEditingMember(null);
+      queryClient.invalidateQueries({ queryKey: ['project', projectId.toString()] });
     },
-  })
+  });
 
   const handleAddMember = () => {
     if (!newMember.userId) {
-      alert('Please select a user')
-      return
+      alert('Please select a user');
+      return;
     }
 
-    const capacityValue = typeof newMember.capacity === 'string'
-      ? (newMember.capacity === '' ? 50 : parseInt(newMember.capacity))
-      : newMember.capacity
+    const capacityValue =
+      typeof newMember.capacity === 'string'
+        ? newMember.capacity === ''
+          ? 50
+          : parseInt(newMember.capacity)
+        : newMember.capacity;
 
     addMemberM.mutate({
       userId: parseInt(newMember.userId),
       role: newMember.role,
       capacity: capacityValue,
-    })
-  }
+    });
+  };
 
   const handleCloseAddModal = () => {
-    setAddingMember({ isOpen: false })
-  }
+    setAddingMember({ isOpen: false });
+  };
 
   const handleRemoveMember = (userId: number) => {
     if (confirm('Are you sure you want to remove this team member?')) {
-      removeMemberM.mutate(userId)
+      removeMemberM.mutate(userId);
     }
-  }
+  };
 
   const handleEditMember = (member: TeamMember) => {
-    const roleId = typeof member.role === 'object' ? member.role.id : (typeof member.role === 'number' ? member.role : 0)
+    const roleId =
+      typeof member.role === 'object'
+        ? member.role.id
+        : typeof member.role === 'number'
+          ? member.role
+          : 0;
     setEditingMember({
       memberId: member.id,
       userId: member.user.id,
       currentRoleId: roleId,
       currentCapacity: member.capacity,
-    })
+    });
     setEditForm({
       roleId,
       capacity: member.capacity,
-    })
-  }
+    });
+  };
 
   const handleSaveEdit = () => {
-    if (!editingMember) return
+    if (!editingMember) return;
 
-    const capacityValue = typeof editForm.capacity === 'string'
-      ? parseInt(editForm.capacity)
-      : editForm.capacity
+    const capacityValue =
+      typeof editForm.capacity === 'string' ? parseInt(editForm.capacity) : editForm.capacity;
 
     updateMemberM.mutate({
       userId: editingMember.userId,
       roleId: editForm.roleId || undefined,
       capacity: capacityValue,
-    })
-  }
+    });
+  };
 
   const handleCancelEdit = () => {
-    setEditingMember(null)
-    setEditForm({ roleId: 0, capacity: 0 })
-  }
+    setEditingMember(null);
+    setEditForm({ roleId: 0, capacity: 0 });
+  };
 
   return (
     <div className="space-y-4">
@@ -223,7 +230,9 @@ export const TeamMemberManager = ({
 
       {/* Team Members List */}
       <div>
-        <div className="text-xs font-semibold text-gray-700 mb-3">Team Members ({members.length})</div>
+        <div className="text-xs font-semibold text-gray-700 mb-3">
+          Team Members ({members.length})
+        </div>
 
         {members.length === 0 ? (
           <div className="bg-gray-50 border border-gray-200 rounded p-4 text-center text-sm">
@@ -240,66 +249,74 @@ export const TeamMemberManager = ({
             title="Add team member"
           >
             <div className="text-center">
-              <div className="text-3xl font-light text-gray-400 hover:text-blue-600 transition-colors">+</div>
+              <div className="text-3xl font-light text-gray-400 hover:text-blue-600 transition-colors">
+                +
+              </div>
               <p className="text-xs text-gray-500 mt-1">Add member</p>
             </div>
           </button>
 
           {members.map((member: TeamMember) => {
-              const roleDisplay = typeof member.role === 'object' ? member.role.display_name : member.role
-              const roleBgColor = typeof member.role === 'object' ? member.role.bg_color : 'bg-gray-100'
-              const roleTextColor = typeof member.role === 'object' ? member.role.text_color : 'text-gray-700'
+            const roleDisplay =
+              typeof member.role === 'object' ? member.role.display_name : member.role;
+            const roleBgColor =
+              typeof member.role === 'object' ? member.role.bg_color : 'bg-gray-100';
+            const roleTextColor =
+              typeof member.role === 'object' ? member.role.text_color : 'text-gray-700';
 
-              return (
-                <div key={member.id} className="bg-white border border-gray-200 rounded p-2.5 hover:shadow-sm transition-shadow">
-                  <div className="space-y-2">
-                    {/* User Info */}
-                    <div>
-                      <p className="text-xs font-semibold text-gray-900">
-                        {member.user.first_name} {member.user.last_name}
-                      </p>
-                      <p className="text-xs text-gray-500 truncate">
-                        {member.user.email}
-                      </p>
-                    </div>
+            return (
+              <div
+                key={member.id}
+                className="bg-white border border-gray-200 rounded p-2.5 hover:shadow-sm transition-shadow"
+              >
+                <div className="space-y-2">
+                  {/* User Info */}
+                  <div>
+                    <p className="text-xs font-semibold text-gray-900">
+                      {member.user.first_name} {member.user.last_name}
+                    </p>
+                    <p className="text-xs text-gray-500 truncate">{member.user.email}</p>
+                  </div>
 
-                    {/* Role Badge + Capacity */}
-                    <div className="flex items-center justify-between gap-2">
-                      <span className={`inline-block px-2 py-0.5 text-xs font-medium rounded-full ${roleBgColor} ${roleTextColor}`}>
-                        {roleDisplay}
-                      </span>
-                      <p className="text-xs font-semibold text-gray-700">{member.capacity}%</p>
-                    </div>
+                  {/* Role Badge + Capacity */}
+                  <div className="flex items-center justify-between gap-2">
+                    <span
+                      className={`inline-block px-2 py-0.5 text-xs font-medium rounded-full ${roleBgColor} ${roleTextColor}`}
+                    >
+                      {roleDisplay}
+                    </span>
+                    <p className="text-xs font-semibold text-gray-700">{member.capacity}%</p>
+                  </div>
 
-                    {/* Capacity Bar */}
-                    <div className="w-full bg-gray-200 rounded-full h-1.5">
-                      <div
-                        className="bg-blue-600 h-1.5 rounded-full transition-all"
-                        style={{ width: `${member.capacity}%` }}
-                      />
-                    </div>
+                  {/* Capacity Bar */}
+                  <div className="w-full bg-gray-200 rounded-full h-1.5">
+                    <div
+                      className="bg-blue-600 h-1.5 rounded-full transition-all"
+                      style={{ width: `${member.capacity}%` }}
+                    />
+                  </div>
 
-                    {/* Actions */}
-                    <div className="flex gap-1.5 pt-1">
-                      <button
-                        onClick={() => handleEditMember(member)}
-                        disabled={updateMemberM.isPending || removeMemberM.isPending}
-                        className="flex-1 text-blue-600 hover:text-blue-800 text-xs font-medium disabled:text-gray-400 hover:bg-blue-50 rounded px-2 py-1 transition-colors"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleRemoveMember(member.user.id)}
-                        disabled={removeMemberM.isPending || updateMemberM.isPending}
-                        className="flex-1 text-red-600 hover:text-red-800 text-xs font-medium disabled:text-gray-400 hover:bg-red-50 rounded px-2 py-1 transition-colors"
-                      >
-                        Remove
-                      </button>
-                    </div>
+                  {/* Actions */}
+                  <div className="flex gap-1.5 pt-1">
+                    <button
+                      onClick={() => handleEditMember(member)}
+                      disabled={updateMemberM.isPending || removeMemberM.isPending}
+                      className="flex-1 text-blue-600 hover:text-blue-800 text-xs font-medium disabled:text-gray-400 hover:bg-blue-50 rounded px-2 py-1 transition-colors"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleRemoveMember(member.user.id)}
+                      disabled={removeMemberM.isPending || updateMemberM.isPending}
+                      className="flex-1 text-red-600 hover:text-red-800 text-xs font-medium disabled:text-gray-400 hover:bg-red-50 rounded px-2 py-1 transition-colors"
+                    >
+                      Remove
+                    </button>
                   </div>
                 </div>
-              )
-            })}
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -308,17 +325,16 @@ export const TeamMemberManager = ({
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 space-y-4">
             <div>
-              <h3 className="text-lg font-semibold text-gray-900">
-                Add Team Member
-              </h3>
-              <p className="text-sm text-gray-600 mt-1">
-                Select a user and assign a role
-              </p>
+              <h3 className="text-lg font-semibold text-gray-900">Add Team Member</h3>
+              <p className="text-sm text-gray-600 mt-1">Select a user and assign a role</p>
             </div>
 
             <div className="space-y-4">
               <div>
-                <label htmlFor="user-select" className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="user-select"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   User
                 </label>
                 <select
@@ -338,16 +354,19 @@ export const TeamMemberManager = ({
               </div>
 
               <div>
-                <label htmlFor="role-select" className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="role-select"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Role
                 </label>
                 <select
                   id="role-select"
                   value={newMember.role}
                   onChange={(e) => {
-                    const role = e.target.value
-                    if (ROLES.includes(role as typeof ROLES[number])) {
-                      setNewMember({ ...newMember, role: role as typeof ROLES[number] })
+                    const role = e.target.value;
+                    if (ROLES.includes(role as (typeof ROLES)[number])) {
+                      setNewMember({ ...newMember, role: role as (typeof ROLES)[number] });
                     }
                   }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
@@ -363,7 +382,10 @@ export const TeamMemberManager = ({
               </div>
 
               <div>
-                <label htmlFor="capacity-input" className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="capacity-input"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Capacity (%)
                 </label>
                 <input
@@ -373,11 +395,12 @@ export const TeamMemberManager = ({
                   max="100"
                   value={newMember.capacity}
                   onChange={(e) => {
-                    const value = e.target.value
+                    const value = e.target.value;
                     setNewMember({
                       ...newMember,
-                      capacity: value === '' ? '' : Math.min(100, Math.max(0, parseInt(value) || 0)),
-                    })
+                      capacity:
+                        value === '' ? '' : Math.min(100, Math.max(0, parseInt(value) || 0)),
+                    });
                   }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
                   disabled={addMemberM.isPending}
@@ -386,7 +409,7 @@ export const TeamMemberManager = ({
                       setNewMember({
                         ...newMember,
                         capacity: 50,
-                      })
+                      });
                     }
                   }}
                   placeholder="50"
@@ -429,9 +452,7 @@ export const TeamMemberManager = ({
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 space-y-4">
             <div>
-              <h3 className="text-lg font-semibold text-gray-900">
-                Edit Team Member
-              </h3>
+              <h3 className="text-lg font-semibold text-gray-900">Edit Team Member</h3>
               <p className="text-sm text-gray-600 mt-1">
                 Update the role and capacity for this team member
               </p>
@@ -439,15 +460,18 @@ export const TeamMemberManager = ({
 
             <div className="space-y-4">
               <div>
-                <label htmlFor="edit-role-select" className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="edit-role-select"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Role
                 </label>
                 <select
                   id="edit-role-select"
                   value={editForm.roleId}
                   onChange={(e) => {
-                    const roleId = parseInt(e.target.value)
-                    setEditForm({ ...editForm, roleId })
+                    const roleId = parseInt(e.target.value);
+                    setEditForm({ ...editForm, roleId });
                   }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
                   disabled={updateMemberM.isPending}
@@ -462,7 +486,10 @@ export const TeamMemberManager = ({
               </div>
 
               <div>
-                <label htmlFor="edit-capacity-input" className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="edit-capacity-input"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Capacity (%)
                 </label>
                 <input
@@ -472,11 +499,12 @@ export const TeamMemberManager = ({
                   max="100"
                   value={editForm.capacity}
                   onChange={(e) => {
-                    const value = e.target.value
+                    const value = e.target.value;
                     setEditForm({
                       ...editForm,
-                      capacity: value === '' ? '' : Math.min(100, Math.max(0, parseInt(value) || 0)),
-                    })
+                      capacity:
+                        value === '' ? '' : Math.min(100, Math.max(0, parseInt(value) || 0)),
+                    });
                   }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
                   disabled={updateMemberM.isPending}
@@ -485,7 +513,7 @@ export const TeamMemberManager = ({
                       setEditForm({
                         ...editForm,
                         capacity: 50,
-                      })
+                      });
                     }
                   }}
                 />
@@ -522,5 +550,5 @@ export const TeamMemberManager = ({
         </div>
       )}
     </div>
-  )
-}
+  );
+};

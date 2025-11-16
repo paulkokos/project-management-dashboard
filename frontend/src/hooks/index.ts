@@ -1,5 +1,5 @@
-export { useAsync } from './useAsync'
-export { useDebounce } from './useDebounce'
-export { useLocalStorage } from './useLocalStorage'
-export { useWebSocket } from './useWebSocket'
-export { useProjectUpdates, useAllProjectUpdates, useChangelogUpdates } from './useProjectUpdates'
+export { useAsync } from './useAsync';
+export { useDebounce } from './useDebounce';
+export { useLocalStorage } from './useLocalStorage';
+export { useWebSocket } from './useWebSocket';
+export { useProjectUpdates, useAllProjectUpdates, useChangelogUpdates } from './useProjectUpdates';

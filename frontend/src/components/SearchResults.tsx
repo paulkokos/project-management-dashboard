@@ -59,7 +59,8 @@ export function SearchResults({ data, isLoading, onPageChange, currentPage }: Se
 
             <div className="flex justify-between items-center">
               <div className="flex flex-wrap gap-1">
-                {result.tags && result.tags.length > 0 && (
+                {result.tags &&
+                  result.tags.length > 0 &&
                   result.tags.slice(0, 3).map((tag: Tag) => (
                     <span
                       key={tag.id}
@@ -68,8 +69,7 @@ export function SearchResults({ data, isLoading, onPageChange, currentPage }: Se
                     >
                       {tag.name}
                     </span>
-                  ))
-                )}
+                  ))}
                 {result.tags && result.tags.length > 3 && (
                   <span className="text-xs text-gray-500 px-2 py-1">
                     +{result.tags.length - 3} more
@@ -78,8 +78,12 @@ export function SearchResults({ data, isLoading, onPageChange, currentPage }: Se
               </div>
 
               <div className="flex gap-4 text-xs text-gray-500">
-                <span>Status: <strong className="text-gray-700 capitalize">{result.status}</strong></span>
-                <span>Progress: <strong className="text-gray-700">{result.progress}%</strong></span>
+                <span>
+                  Status: <strong className="text-gray-700 capitalize">{result.status}</strong>
+                </span>
+                <span>
+                  Progress: <strong className="text-gray-700">{result.progress}%</strong>
+                </span>
               </div>
             </div>
           </Link>
@@ -90,10 +94,8 @@ export function SearchResults({ data, isLoading, onPageChange, currentPage }: Se
         <div className="flex justify-between items-center">
           <div className="text-sm text-gray-500">
             Showing <strong>{(currentPage - 1) * data.page_size + 1}</strong> to{' '}
-            <strong>
-              {Math.min(currentPage * data.page_size, data.total)}
-            </strong>{' '}
-            of <strong>{data.total}</strong> results
+            <strong>{Math.min(currentPage * data.page_size, data.total)}</strong> of{' '}
+            <strong>{data.total}</strong> results
           </div>
 
           <div className="flex gap-2">
@@ -107,7 +109,7 @@ export function SearchResults({ data, isLoading, onPageChange, currentPage }: Se
 
             <div className="flex items-center gap-1">
               {Array.from({ length: data.total_pages }, (_, i) => i + 1)
-                .filter(page => {
+                .filter((page) => {
                   const diff = Math.abs(page - currentPage);
                   return diff <= 1 || page === 1 || page === data.total_pages;
                 })
