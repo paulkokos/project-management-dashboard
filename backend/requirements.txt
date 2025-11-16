@@ -40,7 +40,7 @@ requests==2.32.5
 
 # Testing
 pytest==8.0.2
-pytest-django==4.7.0
+pytest-django==4.11.1
 pytest-cov==4.1.0
 factory-boy==3.3.0
 
