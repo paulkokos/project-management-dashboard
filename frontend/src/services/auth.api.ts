@@ -11,12 +11,8 @@ interface RegistrationCredentials {
 
 // Auth API
 export const authAPI = {
-  login: (username: string, password: string) =>
-    api.post('/auth/token/', { username, password }),
-  refresh: (refreshToken: string) =>
-    api.post('/auth/token/refresh/', { refresh: refreshToken }),
-  getCurrentUser: () =>
-    api.get('/users/me/'),
-  register: (credentials: RegistrationCredentials) =>
-    api.post('/auth/register/', credentials),
+  login: (username: string, password: string) => api.post('/auth/token/', { username, password }),
+  refresh: (refreshToken: string) => api.post('/auth/token/refresh/', { refresh: refreshToken }),
+  getCurrentUser: () => api.get('/users/me/'),
+  register: (credentials: RegistrationCredentials) => api.post('/auth/register/', credentials),
 };

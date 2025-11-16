@@ -1,12 +1,12 @@
-import { FC } from 'react'
+import { FC } from 'react';
 
 interface TeamMemberCountProps {
-  teamCount: number | undefined | null
+  teamCount: number | undefined | null;
 }
 
 export const TeamMemberCount: FC<TeamMemberCountProps> = ({ teamCount }) => {
   if (teamCount === null || teamCount === undefined) {
-    return null
+    return null;
   }
 
   return (
@@ -22,5 +22,5 @@ export const TeamMemberCount: FC<TeamMemberCountProps> = ({ teamCount }) => {
       <span className="font-medium">{teamCount}</span>
       <span>{teamCount === 1 ? 'member' : 'members'}</span>
     </div>
-  )
-}
+  );
+};

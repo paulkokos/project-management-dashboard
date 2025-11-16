@@ -44,18 +44,14 @@ describe('SearchAutocomplete', () => {
   it('renders input field', () => {
     renderAutocomplete();
 
-    expect(
-      screen.getByPlaceholderText('Search projects...')
-    ).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Search projects...')).toBeInTheDocument();
   });
 
   it('calls onChange when input value changes', () => {
     const onChange = vi.fn();
     renderAutocomplete({ onChange });
 
-    const input = screen.getByPlaceholderText(
-      'Search projects...'
-    ) as HTMLInputElement;
+    const input = screen.getByPlaceholderText('Search projects...') as HTMLInputElement;
     fireEvent.change(input, { target: { value: 'test' } });
 
     expect(onChange).toHaveBeenCalledWith('test');
@@ -75,9 +71,7 @@ describe('SearchAutocomplete', () => {
   });
 
   it('displays suggestions when available', async () => {
-    (searchAPI.autocomplete as any).mockResolvedValue(
-      mockSuggestions as any
-    );
+    (searchAPI.autocomplete as any).mockResolvedValue(mockSuggestions as any);
 
     renderAutocomplete({ value: 'mobile' });
 
@@ -85,12 +79,8 @@ describe('SearchAutocomplete', () => {
     fireEvent.focus(input);
 
     await waitFor(() => {
-      expect(
-        screen.getByText('Mobile App Development')
-      ).toBeInTheDocument();
-      expect(
-        screen.getByText('Mobile Backend Service')
-      ).toBeInTheDocument();
+      expect(screen.getByText('Mobile App Development')).toBeInTheDocument();
+      expect(screen.getByText('Mobile Backend Service')).toBeInTheDocument();
     });
 
     vi.restoreAllMocks();
@@ -110,9 +100,7 @@ describe('SearchAutocomplete', () => {
     const onChange = vi.fn();
     const onSearch = vi.fn();
 
-    (searchAPI.autocomplete as any).mockResolvedValue(
-      mockSuggestions as any
-    );
+    (searchAPI.autocomplete as any).mockResolvedValue(mockSuggestions as any);
 
     renderAutocomplete({ value: 'mobile', onChange, onSearch });
 
@@ -120,9 +108,7 @@ describe('SearchAutocomplete', () => {
     fireEvent.focus(input);
 
     await waitFor(() => {
-      expect(
-        screen.getByText('Mobile App Development')
-      ).toBeInTheDocument();
+      expect(screen.getByText('Mobile App Development')).toBeInTheDocument();
     });
 
     const suggestion = screen.getByText('Mobile App Development');
@@ -135,9 +121,7 @@ describe('SearchAutocomplete', () => {
   });
 
   it('hides suggestions when clicking outside', async () => {
-    (searchAPI.autocomplete as any).mockResolvedValue(
-      mockSuggestions as any
-    );
+    (searchAPI.autocomplete as any).mockResolvedValue(mockSuggestions as any);
 
     const { container } = render(
       <QueryClientProvider
@@ -147,11 +131,7 @@ describe('SearchAutocomplete', () => {
           })
         }
       >
-        <SearchAutocomplete
-          value="mobile"
-          onChange={vi.fn()}
-          onSearch={vi.fn()}
-        />
+        <SearchAutocomplete value="mobile" onChange={vi.fn()} onSearch={vi.fn()} />
       </QueryClientProvider>
     );
 
@@ -159,17 +139,13 @@ describe('SearchAutocomplete', () => {
     fireEvent.focus(input);
 
     await waitFor(() => {
-      expect(
-        screen.getByText('Mobile App Development')
-      ).toBeInTheDocument();
+      expect(screen.getByText('Mobile App Development')).toBeInTheDocument();
     });
 
     fireEvent.mouseDown(container);
 
     await waitFor(() => {
-      expect(
-        screen.queryByText('Mobile App Development')
-      ).not.toBeInTheDocument();
+      expect(screen.queryByText('Mobile App Development')).not.toBeInTheDocument();
     });
 
     vi.restoreAllMocks();
@@ -177,10 +153,7 @@ describe('SearchAutocomplete', () => {
 
   it('displays loading spinner during autocomplete fetch', async () => {
     (searchAPI.autocomplete as any).mockImplementation(
-      () =>
-        new Promise(resolve =>
-          setTimeout(() => resolve(mockSuggestions as any), 100)
-        )
+      () => new Promise((resolve) => setTimeout(() => resolve(mockSuggestions as any), 100))
     );
 
     renderAutocomplete({ value: 'mobile' });
@@ -206,9 +179,7 @@ describe('SearchAutocomplete', () => {
       },
     };
 
-    (searchAPI.autocomplete as any).mockResolvedValue(
-      emptySuggestions as any
-    );
+    (searchAPI.autocomplete as any).mockResolvedValue(emptySuggestions as any);
 
     renderAutocomplete({ value: 'nonexistent' });
 
@@ -229,9 +200,7 @@ describe('SearchAutocomplete', () => {
   });
 
   it('displays suggestion type', async () => {
-    (searchAPI.autocomplete as any).mockResolvedValue(
-      mockSuggestions as any
-    );
+    (searchAPI.autocomplete as any).mockResolvedValue(mockSuggestions as any);
 
     renderAutocomplete({ value: 'mobile' });
 
