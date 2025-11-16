@@ -7,6 +7,7 @@ from rest_framework import serializers
 
 from .models import (
     Activity,
+    Comment,
     Milestone,
     Project,
     ProjectBulkOperation,
@@ -514,3 +515,123 @@ class BulkUpdateSerializer(serializers.Serializer):
     )
     tags = serializers.ListField(child=serializers.IntegerField(), required=False)
     etag = serializers.CharField(required=False)
+
+
+class CommentCreateUpdateSerializer(serializers.ModelSerializer):
+    """Serializer for creating and updating comments.
+
+    Handles comment content validation, sanitization, and metadata.
+    This is used for create and update operations.
+    """
+
+    class Meta:
+        model = Comment
+        fields = ["id", "content", "parent_comment"]
+        read_only_fields = ["id"]
+
+    def validate_content(self, value):
+        """Validate comment content.
+
+        - Ensure content is not empty
+        - Trim whitespace
+        - Enforce max length (5000 characters)
+        """
+        if not value or not value.strip():
+            raise serializers.ValidationError("Comment content cannot be empty")
+
+        value = value.strip()
+
+        if len(value) > 5000:
+            raise serializers.ValidationError(
+                "Comment content must be 5000 characters or less"
+            )
+
+        return value
+
+    def validate_parent_comment(self, value):
+        """Validate that parent comment exists and is not deleted."""
+        if value:
+            if value.deleted_at is not None:
+                raise serializers.ValidationError(
+                    "Cannot reply to a deleted comment"
+                )
+        return value
+
+    def create(self, validated_data):
+        """Create a new comment with the current user as author."""
+        validated_data["author"] = self.context["request"].user
+        return super().create(validated_data)
+
+
+class CommentListSerializer(serializers.ModelSerializer):
+    """Lightweight serializer for listing comments.
+
+    This is a simplified version suitable for list views without nested replies.
+    """
+
+    author = UserSimpleSerializer(read_only=True)
+    reply_count = serializers.SerializerMethodField()
+    is_edited = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Comment
+        fields = [
+            "id",
+            "content",
+            "author",
+            "reply_count",
+            "is_edited",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at"]
+
+    def get_reply_count(self, obj):
+        """Get the count of non-deleted replies."""
+        return obj.reply_count
+
+    def get_is_edited(self, obj):
+        """Check if comment has been edited."""
+        return obj.is_edited
+
+
+class CommentDetailSerializer(serializers.ModelSerializer):
+    """Full serializer for comment detail view with nested replies.
+
+    Includes complete comment information and recursively serialized replies.
+    """
+
+    author = UserSimpleSerializer(read_only=True)
+    replies = serializers.SerializerMethodField()
+    reply_count = serializers.SerializerMethodField()
+    is_edited = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Comment
+        fields = [
+            "id",
+            "content",
+            "author",
+            "parent_comment",
+            "replies",
+            "reply_count",
+            "is_edited",
+            "edited_at",
+            "edit_count",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at", "edited_at", "edit_count"]
+
+    def get_replies(self, obj):
+        """Get nested replies (not deleted)."""
+        replies = obj.replies.filter(deleted_at__isnull=True).order_by("-created_at")
+        return CommentListSerializer(replies, many=True, read_only=True).data
+
+    def get_reply_count(self, obj):
+        """Get the count of non-deleted replies."""
+        return obj.reply_count
+
+    def get_is_edited(self, obj):
+        """Check if comment has been edited."""
+        return obj.is_edited
