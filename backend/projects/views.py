@@ -28,6 +28,7 @@ from .models import (
     ProjectBulkOperation,
     Role,
     Tag,
+    Task,
     TeamMember,
 )
 from .permissions import (
@@ -46,6 +47,9 @@ from .serializers import (
     ProjectListSerializer,
     RoleSerializer,
     TagSerializer,
+    TaskCreateUpdateSerializer,
+    TaskDetailSerializer,
+    TaskListSerializer,
     TeamMemberSerializer,
     UserSimpleSerializer,
 )
@@ -894,4 +898,128 @@ class MilestoneViewSet(viewsets.ModelViewSet):
         )
 
         serializer = self.get_serializer(milestone)
+        return Response(serializer.data)
+
+
+class TaskViewSet(viewsets.ModelViewSet):
+    """Provides CRUD operations for project tasks."""
+
+    queryset = Task.objects.select_related(
+        "project", "assigned_to", "milestone", "parent_task"
+    ).prefetch_related("subtasks", "tags")
+    permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ["project_id", "status", "priority", "assigned_to", "milestone"]
+    search_fields = ["title", "description"]
+    ordering = ["-created_at"]
+
+    def get_serializer_class(self):
+        """Return appropriate serializer based on action."""
+        if self.action == "list":
+            return TaskListSerializer
+        elif self.action == "retrieve":
+            return TaskDetailSerializer
+        else:
+            return TaskCreateUpdateSerializer
+
+    def get_queryset(self):
+        """Filter tasks based on user permissions."""
+        user = self.request.user
+
+        if user.is_superuser:
+            return self.queryset
+
+        # Filter tasks for projects user has access to
+        from .permissions import can_view_project_details
+
+        accessible_projects = []
+        for project in Project.objects.all():
+            if can_view_project_details(user, project):
+                accessible_projects.append(project.id)
+
+        return self.queryset.filter(project_id__in=accessible_projects)
+
+    def perform_create(self, serializer):
+        """Create a new task and log activity."""
+        task = serializer.save()
+
+        # Log activity
+        Activity.objects.create(
+            project=task.project,
+            activity_type="task_created",
+            user=self.request.user,
+            description=f"Task '{task.title}' was created",
+            metadata={"task_id": task.id, "task_title": task.title},
+        )
+
+    def perform_update(self, serializer):
+        """Update task and log activity."""
+        old_instance = Task.objects.get(pk=serializer.instance.pk)
+        task = serializer.save()
+
+        # Determine what changed
+        changed_fields = []
+        if old_instance.status != task.status:
+            changed_fields.append("status")
+        if old_instance.priority != task.priority:
+            changed_fields.append("priority")
+        if old_instance.assigned_to_id != task.assigned_to_id:
+            changed_fields.append("assigned_to")
+        if old_instance.progress != task.progress:
+            changed_fields.append("progress")
+
+        if changed_fields:
+            Activity.objects.create(
+                project=task.project,
+                activity_type="task_updated",
+                user=self.request.user,
+                description=f"Task '{task.title}' was updated",
+                changed_fields=changed_fields,
+                metadata={"task_id": task.id, "task_title": task.title},
+            )
+
+    def perform_destroy(self, instance):
+        """Soft delete task and log activity."""
+        instance.soft_delete()
+
+        Activity.objects.create(
+            project=instance.project,
+            activity_type="task_deleted",
+            user=self.request.user,
+            description=f"Task '{instance.title}' was deleted",
+            metadata={"task_id": instance.id, "task_title": instance.title},
+        )
+
+    @action(detail=True, methods=["post"])
+    def mark_complete(self, request, pk=None):
+        """Mark task as complete."""
+        task = self.get_object()
+        task.mark_complete()
+
+        Activity.objects.create(
+            project=task.project,
+            activity_type="task_completed",
+            user=request.user,
+            description=f"Task '{task.title}' was marked as complete",
+            metadata={"task_id": task.id},
+        )
+
+        serializer = self.get_serializer(task)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=["post"])
+    def mark_in_progress(self, request, pk=None):
+        """Mark task as in progress."""
+        task = self.get_object()
+        task.mark_in_progress()
+
+        Activity.objects.create(
+            project=task.project,
+            activity_type="task_status_changed",
+            user=request.user,
+            description=f"Task '{task.title}' is now in progress",
+            metadata={"task_id": task.id, "new_status": "in_progress"},
+        )
+
+        serializer = self.get_serializer(task)
         return Response(serializer.data)
