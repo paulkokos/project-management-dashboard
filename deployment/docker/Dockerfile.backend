@@ -8,6 +8,13 @@ RUN for i in 1 2 3; do apt-get update && apt-get install -y \
     gcc \
     postgresql-client \
     curl \
+    libjpeg-dev \
+    zlib1g-dev \
+    libfreetype6-dev \
+    liblcms2-dev \
+    libtiff-dev \
+    libharfbuzz0b \
+    libwebp-dev \
     && rm -rf /var/lib/apt/lists/* && break || ([ $i -lt 3 ] && sleep 5); done
 
 # Install Python dependencies with extended timeout and retry
