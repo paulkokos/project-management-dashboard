@@ -86,9 +86,7 @@ describe('Search Page', () => {
     renderSearch();
 
     expect(screen.getByText('Search Projects')).toBeInTheDocument();
-    expect(
-      screen.getByPlaceholderText('Search projects...')
-    ).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Search projects...')).toBeInTheDocument();
   });
 
   it('displays initial state with no search performed', () => {
@@ -151,12 +149,8 @@ describe('Search Page', () => {
     fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' });
 
     await waitFor(() => {
-      expect(
-        screen.getByText('Mobile App Development')
-      ).toBeInTheDocument();
-      expect(
-        screen.getByText('Build iOS and Android applications')
-      ).toBeInTheDocument();
+      expect(screen.getByText('Mobile App Development')).toBeInTheDocument();
+      expect(screen.getByText('Build iOS and Android applications')).toBeInTheDocument();
     });
   });
 
@@ -252,7 +246,6 @@ describe('Search Page', () => {
     });
   });
 
-
   it('displays no results message when search returns empty', async () => {
     const emptyResponse = {
       data: {
@@ -278,10 +271,7 @@ describe('Search Page', () => {
 
   it('displays loading state during search', async () => {
     (searchAPI.search as any).mockImplementation(
-      () =>
-        new Promise(resolve =>
-          setTimeout(() => resolve(mockSearchResponse), 100)
-        )
+      () => new Promise((resolve) => setTimeout(() => resolve(mockSearchResponse), 100))
     );
 
     renderSearch();
@@ -314,5 +304,4 @@ describe('Search Page', () => {
       expect(screen.getByText('frontend')).toBeInTheDocument();
     });
   });
-
 });

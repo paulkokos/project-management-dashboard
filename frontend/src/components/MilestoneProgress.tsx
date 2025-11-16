@@ -1,8 +1,8 @@
-import { FC } from 'react'
+import { FC } from 'react';
 
 interface MilestoneProgressProps {
-  milestoneCount: number | undefined | null
-  completedMilestoneCount: number | undefined | null
+  milestoneCount: number | undefined | null;
+  completedMilestoneCount: number | undefined | null;
 }
 
 export const MilestoneProgress: FC<MilestoneProgressProps> = ({
@@ -15,7 +15,7 @@ export const MilestoneProgress: FC<MilestoneProgressProps> = ({
     completedMilestoneCount === null ||
     completedMilestoneCount === undefined
   ) {
-    return null
+    return null;
   }
 
   if (milestoneCount === 0) {
@@ -23,10 +23,10 @@ export const MilestoneProgress: FC<MilestoneProgressProps> = ({
       <div className="inline-flex items-center gap-1 text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded">
         No milestones
       </div>
-    )
+    );
   }
 
-  const percentage = Math.round((completedMilestoneCount / milestoneCount) * 100)
+  const percentage = Math.round((completedMilestoneCount / milestoneCount) * 100);
 
   return (
     <div className="inline-flex items-center gap-2 text-xs">
@@ -49,11 +49,8 @@ export const MilestoneProgress: FC<MilestoneProgressProps> = ({
         </span>
       </div>
       <div className="w-12 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-        <div
-          className="h-full bg-blue-500"
-          style={{ width: `${percentage}%` }}
-        ></div>
+        <div className="h-full bg-blue-500" style={{ width: `${percentage}%` }}></div>
       </div>
     </div>
-  )
-}
+  );
+};

@@ -29,21 +29,35 @@ const queryClient = new QueryClient({
 const mockProjectsPage1 = {
   count: 2,
   results: [
-    { id: 1, title: 'Vaccine Development Platform', status: 'active', health: 'healthy', owner: { username: 'dr.smith' }, tags: [], updated_at: '2024-01-01T10:00:00Z' },
+    {
+      id: 1,
+      title: 'Vaccine Development Platform',
+      status: 'active',
+      health: 'healthy',
+      owner: { username: 'dr.smith' },
+      tags: [],
+      updated_at: '2024-01-01T10:00:00Z',
+    },
   ],
 };
 
 const _mockProjectsPage2 = {
   count: 2,
   results: [
-    { id: 2, title: 'Drug Efficacy Analytics Engine', status: 'completed', health: 'at_risk', owner: { username: 'dr.johnson' }, tags: [], updated_at: '2024-01-02T10:00:00Z' },
+    {
+      id: 2,
+      title: 'Drug Efficacy Analytics Engine',
+      status: 'completed',
+      health: 'at_risk',
+      owner: { username: 'dr.johnson' },
+      tags: [],
+      updated_at: '2024-01-02T10:00:00Z',
+    },
   ],
 };
 
 const mockTags = {
-  results: [
-    { id: 1, name: 'Clinical Research', color: '#0066cc' },
-  ],
+  results: [{ id: 1, name: 'Clinical Research', color: '#0066cc' }],
 };
 
 describe('ProjectList Page', () => {
@@ -68,7 +82,6 @@ describe('ProjectList Page', () => {
     expect(await screen.findByText('Vaccine Development Platform')).toBeInTheDocument();
   });
 
-
   it('searches for projects when search term is entered', async () => {
     renderWithProviders(<ProjectList />);
     const searchInput = screen.getByPlaceholderText(/search projects/i);
@@ -79,5 +92,4 @@ describe('ProjectList Page', () => {
       expect(projectAPI.list).toHaveBeenCalledWith(expect.objectContaining({ search: 'Beta' }));
     });
   });
-
 });

@@ -69,11 +69,12 @@ export default function Signup() {
       // Redirect to dashboard
       navigate('/dashboard');
     } catch (err: any) {
-      const errorMessage = err.response?.data?.username?.[0] ||
-                          err.response?.data?.email?.[0] ||
-                          err.response?.data?.password_confirm?.[0] ||
-                          err.response?.data?.detail ||
-                          'Registration failed. Please try again.';
+      const errorMessage =
+        err.response?.data?.username?.[0] ||
+        err.response?.data?.email?.[0] ||
+        err.response?.data?.password_confirm?.[0] ||
+        err.response?.data?.detail ||
+        'Registration failed. Please try again.';
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -85,9 +86,7 @@ export default function Signup() {
       <div className="w-full max-w-md">
         <div className="bg-white rounded-lg shadow-xl p-8">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 text-center">
-              Create Account
-            </h1>
+            <h1 className="text-3xl font-bold text-gray-900 text-center">Create Account</h1>
             <p className="text-gray-600 text-center mt-2">
               Join Pfizer Project Management Dashboard
             </p>
@@ -195,7 +194,10 @@ export default function Signup() {
 
             {/* Confirm Password */}
             <div>
-              <label htmlFor="password_confirm" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="password_confirm"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 Confirm Password
               </label>
               <div className="relative">

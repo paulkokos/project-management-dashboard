@@ -1,36 +1,36 @@
-import { useEffect } from 'react'
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
-import { QueryClientProvider, QueryClient } from '@tanstack/react-query'
-import Layout from '@/components/Layout'
-import ProjectList from '@/pages/ProjectList'
-import ProjectDetail from '@/pages/ProjectDetail'
-import ProjectCreate from '@/pages/ProjectCreate'
-import ProjectEdit from '@/pages/ProjectEdit'
-import ProjectChangeLog from '@/pages/ProjectChangeLog'
-import DeletedProjects from '@/pages/DeletedProjects'
-import Dashboard from '@/pages/Dashboard'
-import Login from '@/pages/Login'
-import Signup from '@/pages/Signup'
-import Settings from '@/pages/Settings'
-import Search from '@/pages/Search'
-import { useAuthStore } from '@/stores/authStore'
-import { useWebSocket } from '@/hooks'
-import { NotificationProvider } from '@/contexts/NotificationContext'
-import { NotificationContainer } from '@/components/NotificationContainer'
+import { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
+import Layout from '@/components/Layout';
+import ProjectList from '@/pages/ProjectList';
+import ProjectDetail from '@/pages/ProjectDetail';
+import ProjectCreate from '@/pages/ProjectCreate';
+import ProjectEdit from '@/pages/ProjectEdit';
+import ProjectChangeLog from '@/pages/ProjectChangeLog';
+import DeletedProjects from '@/pages/DeletedProjects';
+import Dashboard from '@/pages/Dashboard';
+import Login from '@/pages/Login';
+import Signup from '@/pages/Signup';
+import Settings from '@/pages/Settings';
+import Search from '@/pages/Search';
+import { useAuthStore } from '@/stores/authStore';
+import { useWebSocket } from '@/hooks';
+import { NotificationProvider } from '@/contexts/NotificationContext';
+import { NotificationContainer } from '@/components/NotificationContainer';
 
-const queryClient = new QueryClient()
+const queryClient = new QueryClient();
 
 function AppContent() {
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
-  const checkAuth = useAuthStore((state) => state.checkAuth)
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const checkAuth = useAuthStore((state) => state.checkAuth);
 
   // Check authentication on app load
   useEffect(() => {
-    checkAuth()
-  }, [checkAuth])
+    checkAuth();
+  }, [checkAuth]);
 
   // Initialize WebSocket connection when authenticated
-  useWebSocket({ autoConnect: isAuthenticated })
+  useWebSocket({ autoConnect: isAuthenticated });
 
   // Auth routes - only show to unauthenticated users
   if (!isAuthenticated) {
@@ -40,7 +40,7 @@ function AppContent() {
         <Route path="/signup" element={<Signup />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
-    )
+    );
   }
 
   // Authenticated routes
@@ -62,7 +62,7 @@ function AppContent() {
       </Routes>
       <NotificationContainer />
     </Layout>
-  )
+  );
 }
 
 function App() {
@@ -74,7 +74,7 @@ function App() {
         </Router>
       </NotificationProvider>
     </QueryClientProvider>
-  )
+  );
 }
 
-export default App
+export default App;
