@@ -33,7 +33,9 @@ from .models import (
 )
 from .permissions import (
     CanEditProject,
+    CanEditTask,
     CanViewProjectDetails,
+    CanViewProjectTasks,
     IsProjectOwner,
     can_view_project_details,
 )
@@ -865,7 +867,7 @@ class TaskViewSet(viewsets.ModelViewSet):
     queryset = Task.objects.select_related(
         "project", "assigned_to", "milestone", "parent_task"
     ).prefetch_related("subtasks", "tags")
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, CanViewProjectTasks, CanEditTask]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ["project_id", "status", "priority", "assigned_to", "milestone"]
     search_fields = ["title", "description"]
