@@ -1,5 +1,5 @@
 # Core Django
-Django==5.1.4
+Django==5.2.8
 djangorestframework==3.16.1
 django-cors-headers==4.3.1
 django-filter==24.3
@@ -15,7 +15,7 @@ django-dbbackup==5.0.0
 channels==4.3.1
 channels-redis==4.1.0
 daphne==4.1.2
-python-socketio==5.11.0
+python-socketio==5.12.0
 python-engineio==4.12.3
 
 # Async & Background Tasks
@@ -36,7 +36,7 @@ elasticsearch==9.2.0
 # Development & Utilities
 python-dotenv==1.0.1
 Pillow==11.0.0
-requests==2.32.5
+requests==2.33.0
 
 # Testing
 pytest==8.0.2
