@@ -34,7 +34,8 @@ const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false 
 const mockProject = {
   id: 1,
   title: 'Vaccine Development Platform',
-  description: 'Build a comprehensive platform for vaccine research and development tracking across clinical trials',
+  description:
+    'Build a comprehensive platform for vaccine research and development tracking across clinical trials',
   owner: { id: 1, username: 'dr.smith' },
   team_members_details: [],
   milestones: [],
@@ -67,7 +68,11 @@ describe('ProjectDetail Page', () => {
   it('renders project details correctly', async () => {
     renderComponent({ id: 1, username: 'dr.smith' });
     expect(await screen.findByText('Vaccine Development Platform')).toBeInTheDocument();
-    expect(screen.getByText('Build a comprehensive platform for vaccine research and development tracking across clinical trials')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Build a comprehensive platform for vaccine research and development tracking across clinical trials'
+      )
+    ).toBeInTheDocument();
   });
 
   it('shows loading state initially', () => {
@@ -75,7 +80,6 @@ describe('ProjectDetail Page', () => {
     renderComponent({ id: 1, username: 'owner' });
     expect(screen.getByText(/loading/i)).toBeInTheDocument();
   });
-
 
   describe('Permissions for Project Owner', () => {
     it('enables Edit and Delete buttons for the project owner', async () => {

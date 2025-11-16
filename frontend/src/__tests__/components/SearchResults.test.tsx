@@ -88,31 +88,21 @@ describe('SearchResults', () => {
     renderSearchResults(emptyData);
 
     expect(screen.getByText('No projects found')).toBeInTheDocument();
-    expect(
-      screen.getByText('Try adjusting your search or filters')
-    ).toBeInTheDocument();
+    expect(screen.getByText('Try adjusting your search or filters')).toBeInTheDocument();
   });
 
   it('displays project results', () => {
     renderSearchResults();
 
-    expect(
-      screen.getByText('Mobile App Development')
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText('Backend API Development')
-    ).toBeInTheDocument();
+    expect(screen.getByText('Mobile App Development')).toBeInTheDocument();
+    expect(screen.getByText('Backend API Development')).toBeInTheDocument();
   });
 
   it('displays project descriptions', () => {
     renderSearchResults();
 
-    expect(
-      screen.getByText('Build iOS and Android applications')
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText('Create RESTful API for mobile apps')
-    ).toBeInTheDocument();
+    expect(screen.getByText('Build iOS and Android applications')).toBeInTheDocument();
+    expect(screen.getByText('Create RESTful API for mobile apps')).toBeInTheDocument();
   });
 
   it('displays owner usernames', () => {
@@ -143,7 +133,6 @@ describe('SearchResults', () => {
     expect(screen.getByText('frontend')).toBeInTheDocument();
     expect(screen.getByText('backend')).toBeInTheDocument();
   });
-
 
   it('displays tags up to 3, with more indicator if there are more', () => {
     const manyTagsData: SearchResponse = {
@@ -178,10 +167,7 @@ describe('SearchResults', () => {
   it('is a link to project detail page', () => {
     const { container } = renderSearchResults();
 
-    const projectLinks = container.querySelectorAll(
-      'a[href="/projects/1"]'
-    );
+    const projectLinks = container.querySelectorAll('a[href="/projects/1"]');
     expect(projectLinks.length).toBeGreaterThan(0);
   });
-
 });

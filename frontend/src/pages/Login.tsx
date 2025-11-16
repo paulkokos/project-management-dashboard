@@ -1,39 +1,39 @@
-import { useState, FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useAuthStore } from '@/stores/authStore'
-import { authAPI } from '@/services'
-import { Visibility, VisibilityOff } from '@mui/icons-material'
+import { useState, FormEvent } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuthStore } from '@/stores/authStore';
+import { authAPI } from '@/services';
+import { Visibility, VisibilityOff } from '@mui/icons-material';
 
 export default function Login() {
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
-  const navigate = useNavigate()
-  const { setTokens, setUser } = useAuthStore()
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const { setTokens, setUser } = useAuthStore();
 
   const handleLogin = async (e: FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError('')
+    e.preventDefault();
+    setLoading(true);
+    setError('');
 
     try {
-      const response = await authAPI.login(username, password)
-      setTokens(response.data)
+      const response = await authAPI.login(username, password);
+      setTokens(response.data);
 
       // Fetch current user details
-      const userResponse = await authAPI.getCurrentUser()
-      setUser(userResponse.data)
+      const userResponse = await authAPI.getCurrentUser();
+      setUser(userResponse.data);
 
-      navigate('/')
+      navigate('/');
     } catch (err) {
-      const error = err as { response?: { data?: { detail?: string } } }
-      setError(error.response?.data?.detail || 'Login failed')
+      const error = err as { response?: { data?: { detail?: string } } };
+      setError(error.response?.data?.detail || 'Login failed');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -42,9 +42,7 @@ export default function Login() {
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Project Management Dashboard
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Sign in to your account
-          </p>
+          <p className="mt-2 text-center text-sm text-gray-600">Sign in to your account</p>
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleLogin}>
@@ -107,5 +105,5 @@ export default function Login() {
         </form>
       </div>
     </div>
-  )
+  );
 }

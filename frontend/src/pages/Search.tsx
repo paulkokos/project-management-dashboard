@@ -51,8 +51,7 @@ export default function Search() {
     setPage(1);
   };
 
-  const hasActiveFilters =
-    statusFilter !== '' || healthFilter !== '' || ownerFilter !== '';
+  const hasActiveFilters = statusFilter !== '' || healthFilter !== '' || ownerFilter !== '';
 
   return (
     <div className="space-y-6">
@@ -64,11 +63,7 @@ export default function Search() {
       </div>
 
       <div className="card">
-        <SearchAutocomplete
-          value={searchQuery}
-          onChange={setSearchQuery}
-          onSearch={handleSearch}
-        />
+        <SearchAutocomplete value={searchQuery} onChange={setSearchQuery} onSearch={handleSearch} />
       </div>
 
       {hasSearched && searchQuery && (
@@ -123,9 +118,7 @@ export default function Search() {
               d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
             />
           </svg>
-          <p className="mt-4 text-gray-500 text-lg">
-            Start typing to search for projects
-          </p>
+          <p className="mt-4 text-gray-500 text-lg">Start typing to search for projects</p>
           <p className="text-gray-400 text-sm mt-2">
             Search by project title, description, tags, and more
           </p>

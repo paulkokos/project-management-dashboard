@@ -1,48 +1,48 @@
-import { useParams, useNavigate } from 'react-router-dom'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { projectAPI } from '@/services'
-import { useProjectUpdates } from '@/hooks'
-import { useAuthStore } from '@/stores/authStore'
-import { useNotification } from '@/contexts/NotificationContext'
-import { TeamMemberManager } from '@/components/TeamMemberManager'
-import { MilestoneManager } from '@/components/MilestoneManager'
+import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { projectAPI } from '@/services';
+import { useProjectUpdates } from '@/hooks';
+import { useAuthStore } from '@/stores/authStore';
+import { useNotification } from '@/contexts/NotificationContext';
+import { TeamMemberManager } from '@/components/TeamMemberManager';
+import { MilestoneManager } from '@/components/MilestoneManager';
 import {
   canEditProject,
   canManageTeam,
   canViewTeamRoster,
   canDeleteProject,
-  getEditRestrictionMessage
-} from '@/utils/permissions'
+  getEditRestrictionMessage,
+} from '@/utils/permissions';
 
 export default function ProjectDetail() {
-  const { id } = useParams<{ id: string }>()
-  const navigate = useNavigate()
-  const queryClient = useQueryClient()
-  const { user } = useAuthStore()
-  const { addNotification } = useNotification()
-  const projectId = id ? parseInt(id) : undefined
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { user } = useAuthStore();
+  const { addNotification } = useNotification();
+  const projectId = id ? parseInt(id) : undefined;
 
   // Subscribe to this specific project's updates via WebSocket
-  useProjectUpdates(projectId)
+  useProjectUpdates(projectId);
 
   const { data: project, isLoading } = useQuery({
     queryKey: ['project', id],
     queryFn: () => projectAPI.get(parseInt(id!)),
     enabled: !!id,
-  })
+  });
 
   const deleteMutation = useMutation({
     mutationFn: () => projectAPI.softDelete(parseInt(id!)),
     onSuccess: () => {
-      const projectTitle = project?.data?.title || 'Project'
+      const projectTitle = project?.data?.title || 'Project';
       addNotification({
         type: 'success',
         message: `Project "${projectTitle}" has been deleted`,
         description: `Deleted by ${user?.username}`,
         duration: 5000,
-      })
-      navigate('/projects')
-      queryClient.invalidateQueries({ queryKey: ['projects'] })
+      });
+      navigate('/projects');
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
     },
     onError: () => {
       addNotification({
@@ -50,19 +50,18 @@ export default function ProjectDetail() {
         message: 'Failed to delete project',
         description: 'Please try again',
         duration: 5000,
-      })
+      });
     },
-  })
+  });
 
-  if (isLoading) return <div>Loading...</div>
-  if (!project?.data) return <div>Project not found</div>
+  if (isLoading) return <div>Loading...</div>;
+  if (!project?.data) return <div>Project not found</div>;
 
-  const p = project.data
-  const canEdit = canEditProject(user, p)
-  const canManageTeamMembers = canManageTeam(user, p)
-  const canRemoveProject = canDeleteProject(user, p)
-  const canViewTeam = canViewTeamRoster(user, p)
-
+  const p = project.data;
+  const canEdit = canEditProject(user, p);
+  const canManageTeamMembers = canManageTeam(user, p);
+  const canRemoveProject = canDeleteProject(user, p);
+  const canViewTeam = canViewTeamRoster(user, p);
 
   return (
     <div className="space-y-6">
@@ -87,10 +86,7 @@ export default function ProjectDetail() {
         </div>
         <div className="flex gap-2 flex-shrink-0">
           {canEdit ? (
-            <button
-              onClick={() => navigate(`/projects/${id}/edit`)}
-              className="btn btn-primary"
-            >
+            <button onClick={() => navigate(`/projects/${id}/edit`)} className="btn btn-primary">
               Edit
             </button>
           ) : (
@@ -106,7 +102,7 @@ export default function ProjectDetail() {
             <button
               onClick={() => {
                 if (confirm('Are you sure you want to delete this project?')) {
-                  deleteMutation.mutate()
+                  deleteMutation.mutate();
                 }
               }}
               disabled={deleteMutation.isPending}
@@ -129,15 +125,11 @@ export default function ProjectDetail() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="card">
           <h3 className="font-semibold text-gray-700">Status</h3>
-          <p className={`status-badge status-${p.status} mt-2`}>
-            {p.status}
-          </p>
+          <p className={`status-badge status-${p.status} mt-2`}>{p.status}</p>
         </div>
         <div className="card">
           <h3 className="font-semibold text-gray-700">Health</h3>
-          <p className={`health-${p.health} mt-2 font-bold`}>
-            {p.health}
-          </p>
+          <p className={`health-${p.health} mt-2 font-bold`}>{p.health}</p>
         </div>
         <div className="card">
           <h3 className="font-semibold text-gray-700">Progress</h3>
@@ -148,7 +140,6 @@ export default function ProjectDetail() {
           <p className="text-2xl font-bold mt-2">{p.team_count || 0}</p>
         </div>
       </div>
-
 
       {canViewTeam && (
         <div className="card">
@@ -174,17 +165,28 @@ export default function ProjectDetail() {
                 <table className="min-w-full divide-y divide-gray-200 border border-gray-200 rounded-lg">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">User</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Email</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Role</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Capacity</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                        User
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                        Email
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                        Role
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                        Capacity
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {p.team_members_details?.map((member: any) => {
-                      const roleDisplay = typeof member.role === 'object' ? member.role.display_name : member.role
-                      const roleBgColor = typeof member.role === 'object' ? member.role.bg_color : 'bg-gray-100'
-                      const roleTextColor = typeof member.role === 'object' ? member.role.text_color : 'text-gray-700'
+                      const roleDisplay =
+                        typeof member.role === 'object' ? member.role.display_name : member.role;
+                      const roleBgColor =
+                        typeof member.role === 'object' ? member.role.bg_color : 'bg-gray-100';
+                      const roleTextColor =
+                        typeof member.role === 'object' ? member.role.text_color : 'text-gray-700';
                       return (
                         <tr key={member.id} className="hover:bg-gray-50">
                           <td className="px-6 py-4 whitespace-nowrap">
@@ -196,7 +198,9 @@ export default function ProjectDetail() {
                             <div className="text-sm text-gray-600">{member.user.email}</div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`px-3 py-1 inline-flex text-sm font-medium rounded-full ${roleBgColor} ${roleTextColor}`}>
+                            <span
+                              className={`px-3 py-1 inline-flex text-sm font-medium rounded-full ${roleBgColor} ${roleTextColor}`}
+                            >
                               {roleDisplay}
                             </span>
                           </td>
@@ -208,11 +212,13 @@ export default function ProjectDetail() {
                                   style={{ width: `${member.capacity}%` }}
                                 />
                               </div>
-                              <span className="text-sm font-medium text-gray-700 min-w-12">{member.capacity}%</span>
+                              <span className="text-sm font-medium text-gray-700 min-w-12">
+                                {member.capacity}%
+                              </span>
                             </div>
                           </td>
                         </tr>
-                      )
+                      );
                     })}
                   </tbody>
                 </table>
@@ -226,9 +232,7 @@ export default function ProjectDetail() {
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-bold">Milestones</h2>
           {!canEdit && (
-            <span className="text-xs bg-amber-50 text-amber-700 px-3 py-1 rounded">
-              Read Only
-            </span>
+            <span className="text-xs bg-amber-50 text-amber-700 px-3 py-1 rounded">Read Only</span>
           )}
         </div>
         <MilestoneManager
@@ -254,5 +258,5 @@ export default function ProjectDetail() {
         </div>
       )}
     </div>
-  )
+  );
 }

@@ -30,10 +30,7 @@ export function SearchFilters({
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg font-bold">Filters</h2>
         {hasActiveFilters && (
-          <button
-            onClick={onReset}
-            className="text-sm text-blue-600 hover:text-blue-800 underline"
-          >
+          <button onClick={onReset} className="text-sm text-blue-600 hover:text-blue-800 underline">
             Reset Filters
           </button>
         )}
@@ -53,7 +50,10 @@ export function SearchFilters({
                 onChange={() => onStatusChange('')}
                 className="w-4 h-4"
               />
-              <span className="ml-3 text-gray-700">All ({facets.statuses ? Object.values(facets.statuses).reduce((a, b) => a + b, 0) : 0})</span>
+              <span className="ml-3 text-gray-700">
+                All (
+                {facets.statuses ? Object.values(facets.statuses).reduce((a, b) => a + b, 0) : 0})
+              </span>
             </label>
             {Object.entries(facets.statuses).map(([status, count]) => (
               <label
@@ -91,7 +91,10 @@ export function SearchFilters({
                 onChange={() => onHealthChange('')}
                 className="w-4 h-4"
               />
-              <span className="ml-3 text-gray-700">All ({facets.healths ? Object.values(facets.healths).reduce((a, b) => a + b, 0) : 0})</span>
+              <span className="ml-3 text-gray-700">
+                All ({facets.healths ? Object.values(facets.healths).reduce((a, b) => a + b, 0) : 0}
+                )
+              </span>
             </label>
             {Object.entries(facets.healths).map(([health, count]) => (
               <label
@@ -129,7 +132,9 @@ export function SearchFilters({
                 onChange={() => onOwnerChange('')}
                 className="w-4 h-4"
               />
-              <span className="ml-3 text-gray-700">All ({facets.owners ? Object.values(facets.owners).reduce((a, b) => a + b, 0) : 0})</span>
+              <span className="ml-3 text-gray-700">
+                All ({facets.owners ? Object.values(facets.owners).reduce((a, b) => a + b, 0) : 0})
+              </span>
             </label>
             {Object.entries(facets.owners).map(([owner, count]) => (
               <label
