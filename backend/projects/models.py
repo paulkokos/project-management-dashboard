@@ -377,3 +377,137 @@ class ProjectBulkOperation(BaseModel):
 
     def __str__(self):
         return f"{self.operation_type} - {self.status}"
+
+
+class Task(BaseModel):
+    """Project task with status, priority, assignment, and progress tracking"""
+
+    STATUS_CHOICES = [
+        ("backlog", "Backlog"),
+        ("todo", "To Do"),
+        ("in_progress", "In Progress"),
+        ("in_review", "In Review"),
+        ("done", "Done"),
+        ("cancelled", "Cancelled"),
+    ]
+
+    PRIORITY_CHOICES = [
+        ("low", "Low"),
+        ("medium", "Medium"),
+        ("high", "High"),
+        ("critical", "Critical"),
+    ]
+
+    # Core fields
+    project = models.ForeignKey(
+        Project, on_delete=models.CASCADE, related_name="tasks", db_index=True
+    )
+    title = models.CharField(max_length=255, db_index=True)
+    description = models.TextField(blank=True)
+
+    # Status and Priority
+    status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default="backlog", db_index=True
+    )
+    priority = models.CharField(
+        max_length=20, choices=PRIORITY_CHOICES, default="medium", db_index=True
+    )
+
+    # Assignment
+    assigned_to = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="assigned_tasks",
+        db_index=True,
+    )
+
+    # Progress and Estimation
+    progress = models.IntegerField(
+        default=0,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        help_text="Task progress as percentage (0-100%)",
+    )
+    estimated_hours = models.IntegerField(null=True, blank=True)
+    actual_hours = models.DecimalField(
+        max_digits=6, decimal_places=2, null=True, blank=True
+    )
+
+    # Dates
+    due_date = models.DateField(null=True, blank=True)
+    start_date = models.DateField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    # Relations
+    parent_task = models.ForeignKey(
+        "self",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="subtasks",
+    )
+    milestone = models.ForeignKey(
+        Milestone,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="tasks",
+    )
+
+    # Metadata
+    tags = models.ManyToManyField(Tag, related_name="tasks", blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["project", "status"]),
+            models.Index(fields=["project", "priority"]),
+            models.Index(fields=["assigned_to", "status"]),
+            models.Index(fields=["milestone"]),
+            models.Index(fields=["due_date"]),
+        ]
+
+    def __str__(self):
+        return f"{self.project.title} - {self.title}"
+
+    @property
+    def is_overdue(self):
+        """Check if task is overdue"""
+        if not self.due_date or self.status == "done":
+            return False
+        from datetime import date
+
+        return self.due_date < date.today()
+
+    @property
+    def days_until_due(self):
+        """Calculate days until due date"""
+        if not self.due_date:
+            return None
+        from datetime import date
+
+        delta = (self.due_date - date.today()).days
+        return delta
+
+    @property
+    def subtask_count(self):
+        """Get number of subtasks"""
+        return self.subtasks.count()
+
+    @property
+    def completed_subtask_count(self):
+        """Get number of completed subtasks"""
+        return self.subtasks.filter(status="done").count()
+
+    def mark_complete(self):
+        """Mark task as complete"""
+        self.status = "done"
+        self.progress = 100
+        self.completed_at = timezone.now()
+        self.save()
+
+    def mark_in_progress(self):
+        """Mark task as in progress"""
+        self.status = "in_progress"
+        self.save()
