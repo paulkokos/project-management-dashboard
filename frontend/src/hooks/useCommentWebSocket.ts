@@ -57,6 +57,62 @@ export function useCommentWebSocket({
     [onStatusChange]
   );
 
+  const handleCommentEvent = useCallback(
+    (event: CommentEvent) => {
+      const COMMENTS_QUERY_KEY = ['comments', projectId];
+
+      switch (event.type) {
+        case 'comment_created':
+          console.log('Comment created:', event.comment);
+          // Invalidate comments list to refetch
+          queryClient.invalidateQueries({
+            queryKey: COMMENTS_QUERY_KEY,
+          });
+          break;
+
+        case 'comment_updated':
+          console.log('Comment updated:', event.comment);
+          // Update specific comment in cache
+          queryClient.invalidateQueries({
+            queryKey: ['comments', event.comment.id],
+          });
+          // Also invalidate list
+          queryClient.invalidateQueries({
+            queryKey: COMMENTS_QUERY_KEY,
+          });
+          break;
+
+        case 'comment_deleted':
+          console.log('Comment deleted:', event.comment.id);
+          // Remove from cache
+          queryClient.removeQueries({
+            queryKey: ['comments', event.comment.id],
+          });
+          // Invalidate list
+          queryClient.invalidateQueries({
+            queryKey: COMMENTS_QUERY_KEY,
+          });
+          break;
+
+        case 'comment_replied':
+          console.log('Reply added to comment:', event.comment.id);
+          // Invalidate parent comment
+          queryClient.invalidateQueries({
+            queryKey: ['comments', event.comment.id],
+          });
+          // Invalidate list
+          queryClient.invalidateQueries({
+            queryKey: COMMENTS_QUERY_KEY,
+          });
+          break;
+
+        default:
+          console.log('Unknown event type:', event.type);
+      }
+    },
+    [projectId, queryClient]
+  );
+
   const connect = useCallback(() => {
     if (!enabled || !projectId) return;
 
@@ -133,63 +189,7 @@ export function useCommentWebSocket({
       updateStatus('error');
       onError?.(error instanceof Error ? error : new Error('Unknown error'));
     }
-  }, [projectId, enabled, updateStatus, onError]);
-
-  const handleCommentEvent = useCallback(
-    (event: CommentEvent) => {
-      const COMMENTS_QUERY_KEY = ['comments', projectId];
-
-      switch (event.type) {
-        case 'comment_created':
-          console.log('Comment created:', event.comment);
-          // Invalidate comments list to refetch
-          queryClient.invalidateQueries({
-            queryKey: COMMENTS_QUERY_KEY,
-          });
-          break;
-
-        case 'comment_updated':
-          console.log('Comment updated:', event.comment);
-          // Update specific comment in cache
-          queryClient.invalidateQueries({
-            queryKey: ['comments', event.comment.id],
-          });
-          // Also invalidate list
-          queryClient.invalidateQueries({
-            queryKey: COMMENTS_QUERY_KEY,
-          });
-          break;
-
-        case 'comment_deleted':
-          console.log('Comment deleted:', event.comment.id);
-          // Remove from cache
-          queryClient.removeQueries({
-            queryKey: ['comments', event.comment.id],
-          });
-          // Invalidate list
-          queryClient.invalidateQueries({
-            queryKey: COMMENTS_QUERY_KEY,
-          });
-          break;
-
-        case 'comment_replied':
-          console.log('Reply added to comment:', event.comment.id);
-          // Invalidate parent comment
-          queryClient.invalidateQueries({
-            queryKey: ['comments', event.comment.id],
-          });
-          // Invalidate list
-          queryClient.invalidateQueries({
-            queryKey: COMMENTS_QUERY_KEY,
-          });
-          break;
-
-        default:
-          console.log('Unknown event type:', event.type);
-      }
-    },
-    [projectId, queryClient]
-  );
+  }, [projectId, enabled, updateStatus, onError, handleCommentEvent]);
 
   const sendPing = useCallback(() => {
     if (websocketRef.current?.readyState === WebSocket.OPEN) {

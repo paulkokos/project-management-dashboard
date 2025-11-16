@@ -1,4 +1,4 @@
-import { FC, useState, useEffect } from 'react';
+import { FC, useState, useEffect, FormEvent } from 'react';
 
 interface CommentFormProps {
   onSubmit: (content: string) => void;
@@ -34,7 +34,7 @@ export const CommentForm: FC<CommentFormProps> = ({
     setContent(initialContent);
   }, [initialContent]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (isValid) {
       onSubmit(content);

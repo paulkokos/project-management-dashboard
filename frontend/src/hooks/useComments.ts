@@ -105,7 +105,7 @@ export function useUpdateComment() {
       });
       return response.data as Comment;
     },
-    onSuccess: (updatedComment) => {
+    onSuccess: () => {
       // Invalidate all comment queries to ensure consistency
       queryClient.invalidateQueries({
         queryKey: COMMENTS_QUERY_KEY,
