@@ -1,111 +1,113 @@
-import { useEffect, useState } from 'react'
-import { Notification } from '@/contexts/NotificationContext'
+import { useEffect, useState } from 'react';
+import { Notification } from '@/contexts/NotificationContext';
 
 interface NotificationToastProps {
-  notification: Notification
-  onClose: () => void
+  notification: Notification;
+  onClose: () => void;
 }
 
 export const NotificationToast = ({ notification, onClose }: NotificationToastProps) => {
-  const [isClosing, setIsClosing] = useState(false)
-  const [progress, setProgress] = useState(100)
+  const [isClosing, setIsClosing] = useState(false);
+  const [progress, setProgress] = useState(100);
 
   useEffect(() => {
-    if (notification.duration === 0) return // Don't auto-close permanent notifications
+    if (notification.duration === 0) return; // Don't auto-close permanent notifications
 
     const timer = setTimeout(() => {
-      setIsClosing(true)
-      setTimeout(onClose, 300) // Wait for fade out
-    }, notification.duration)
+      setIsClosing(true);
+      setTimeout(onClose, 300); // Wait for fade out
+    }, notification.duration);
 
     // Update progress bar
     const progressInterval = setInterval(() => {
-      setProgress(prev => Math.max(0, prev - (100 / ((notification.duration || 5000) / 50))))
-    }, 50)
+      setProgress((prev) => Math.max(0, prev - 100 / ((notification.duration || 5000) / 50)));
+    }, 50);
 
     return () => {
-      clearTimeout(timer)
-      clearInterval(progressInterval)
-    }
-  }, [notification.duration, onClose])
+      clearTimeout(timer);
+      clearInterval(progressInterval);
+    };
+  }, [notification.duration, onClose]);
 
   const getTypeStyles = () => {
-    const baseStyles = 'rounded-lg shadow-xl overflow-hidden mb-4'
-    const closingStyles = isClosing ? 'opacity-0' : 'opacity-100'
+    const baseStyles = 'rounded-lg shadow-xl overflow-hidden mb-4';
+    const closingStyles = isClosing ? 'opacity-0' : 'opacity-100';
 
     switch (notification.type) {
       case 'success':
-        return `${baseStyles} ${closingStyles} bg-green-50 border border-green-200`
+        return `${baseStyles} ${closingStyles} bg-green-50 border border-green-200`;
       case 'error':
-        return `${baseStyles} ${closingStyles} bg-red-50 border border-red-200`
+        return `${baseStyles} ${closingStyles} bg-red-50 border border-red-200`;
       case 'warning':
-        return `${baseStyles} ${closingStyles} bg-yellow-50 border border-yellow-200`
+        return `${baseStyles} ${closingStyles} bg-yellow-50 border border-yellow-200`;
       case 'info':
       default:
-        return `${baseStyles} ${closingStyles} bg-blue-50 border border-blue-200`
+        return `${baseStyles} ${closingStyles} bg-blue-50 border border-blue-200`;
     }
-  }
+  };
 
   const getIconBgColor = () => {
     switch (notification.type) {
       case 'success':
-        return 'bg-green-500'
+        return 'bg-green-500';
       case 'error':
-        return 'bg-red-500'
+        return 'bg-red-500';
       case 'warning':
-        return 'bg-yellow-500'
+        return 'bg-yellow-500';
       case 'info':
       default:
-        return 'bg-blue-500'
+        return 'bg-blue-500';
     }
-  }
+  };
 
   const getTextColor = () => {
     switch (notification.type) {
       case 'success':
-        return 'text-green-900'
+        return 'text-green-900';
       case 'error':
-        return 'text-red-900'
+        return 'text-red-900';
       case 'warning':
-        return 'text-yellow-900'
+        return 'text-yellow-900';
       case 'info':
       default:
-        return 'text-blue-900'
+        return 'text-blue-900';
     }
-  }
+  };
 
   const getProgressBarColor = () => {
     switch (notification.type) {
       case 'success':
-        return 'bg-green-500'
+        return 'bg-green-500';
       case 'error':
-        return 'bg-red-500'
+        return 'bg-red-500';
       case 'warning':
-        return 'bg-yellow-500'
+        return 'bg-yellow-500';
       case 'info':
       default:
-        return 'bg-blue-500'
+        return 'bg-blue-500';
     }
-  }
+  };
 
   const getIcon = () => {
     switch (notification.type) {
       case 'success':
-        return '✓'
+        return '✓';
       case 'error':
-        return '✕'
+        return '✕';
       case 'warning':
-        return '⚠'
+        return '⚠';
       case 'info':
       default:
-        return 'ℹ'
+        return 'ℹ';
     }
-  }
+  };
 
   return (
     <div className={getTypeStyles()}>
       <div className={`p-5 flex items-start gap-4 ${getTextColor()}`}>
-        <div className={`flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full font-bold text-white text-lg ${getIconBgColor()}`}>
+        <div
+          className={`flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full font-bold text-white text-lg ${getIconBgColor()}`}
+        >
           {getIcon()}
         </div>
         <div className="flex-1 min-w-0">
@@ -132,5 +134,5 @@ export const NotificationToast = ({ notification, onClose }: NotificationToastPr
         </div>
       )}
     </div>
-  )
-}
+  );
+};

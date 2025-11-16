@@ -1,14 +1,14 @@
-import { useState, useMemo, useEffect } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { milestoneAPI } from '@/services'
-import { wsService } from '@/services/websocket'
-import { useNotification } from '@/contexts/NotificationContext'
-import { Milestone } from '@/types'
+import { useState, useMemo, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { milestoneAPI } from '@/services';
+import { wsService } from '@/services/websocket';
+import { useNotification } from '@/contexts/NotificationContext';
+import { Milestone } from '@/types';
 
 interface MilestoneManagerProps {
-  projectId: number
-  canEdit: boolean
-  initialMilestones?: Milestone[]
+  projectId: number;
+  canEdit: boolean;
+  initialMilestones?: Milestone[];
 }
 
 export const MilestoneManager = ({
@@ -16,23 +16,23 @@ export const MilestoneManager = ({
   canEdit,
   initialMilestones = [],
 }: MilestoneManagerProps) => {
-  const [milestones, setMilestones] = useState<Milestone[]>(initialMilestones)
-  const [showForm, setShowForm] = useState(false)
-  const [editingId, setEditingId] = useState<number | null>(null)
+  const [milestones, setMilestones] = useState<Milestone[]>(initialMilestones);
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [newMilestone, setNewMilestone] = useState({
     title: '',
     description: '',
     due_date: '',
     progress: 0 as number | string,
-  })
+  });
   const [editMilestone, setEditMilestone] = useState({
     title: '',
     description: '',
     due_date: '',
     progress: 0 as number | string,
-  })
-  const queryClient = useQueryClient()
-  const { addNotification } = useNotification()
+  });
+  const queryClient = useQueryClient();
+  const { addNotification } = useNotification();
 
   // Subscribe to real-time milestone updates via WebSocket
   useEffect(() => {
@@ -40,36 +40,36 @@ export const MilestoneManager = ({
       // Only process events for this project
       if (payload.project_id === projectId) {
         // Invalidate queries to refetch fresh data
-        queryClient.invalidateQueries({ queryKey: ['milestones', projectId] })
-        queryClient.invalidateQueries({ queryKey: ['project', projectId.toString()] })
+        queryClient.invalidateQueries({ queryKey: ['milestones', projectId] });
+        queryClient.invalidateQueries({ queryKey: ['project', projectId.toString()] });
       }
-    }
+    };
 
     // Subscribe to milestone change events
-    wsService.on('milestone_changed', handleMilestoneChange)
+    wsService.on('milestone_changed', handleMilestoneChange);
 
     // Cleanup: unsubscribe when component unmounts
     return () => {
-      wsService.off('milestone_changed', handleMilestoneChange)
-    }
-  }, [projectId, queryClient])
+      wsService.off('milestone_changed', handleMilestoneChange);
+    };
+  }, [projectId, queryClient]);
 
   // Fetch milestones
   const { data: milestonesResponse, isLoading: milestonesLoading } = useQuery({
     queryKey: ['milestones', projectId],
     queryFn: () => milestoneAPI.list(projectId),
-  })
+  });
 
   const fetchedMilestones = useMemo(() => {
-    const data = milestonesResponse?.data
+    const data = milestonesResponse?.data;
     if (Array.isArray(data)) {
-      return data
+      return data;
     }
     if (data?.results && Array.isArray(data.results)) {
-      return data.results
+      return data.results;
     }
-    return []
-  }, [milestonesResponse])
+    return [];
+  }, [milestonesResponse]);
 
   // Create milestone
   const createMilestoneM = useMutation({
@@ -81,12 +81,12 @@ export const MilestoneManager = ({
         description: '',
         due_date: '',
         progress: 0,
-      })
-      setShowForm(false)
+      });
+      setShowForm(false);
 
       // Invalidate queries to refetch fresh data
-      queryClient.invalidateQueries({ queryKey: ['milestones', projectId] })
-      queryClient.invalidateQueries({ queryKey: ['project', projectId.toString()] })
+      queryClient.invalidateQueries({ queryKey: ['milestones', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['project', projectId.toString()] });
     },
     onError: (error: any) => {
       addNotification({
@@ -94,17 +94,17 @@ export const MilestoneManager = ({
         message: 'Failed to create milestone',
         description: error.response?.data?.detail || 'Please try again',
         duration: 7000,
-      })
+      });
     },
-  })
+  });
 
   // Update milestone progress
   const updateMilestoneM = useMutation({
     mutationFn: (data: { id: number; progress: number }) =>
       milestoneAPI.update(data.id, { progress: data.progress }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['milestones', projectId] })
-      queryClient.invalidateQueries({ queryKey: ['project', projectId.toString()] })
+      queryClient.invalidateQueries({ queryKey: ['milestones', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['project', projectId.toString()] });
     },
     onError: (error: any) => {
       addNotification({
@@ -112,16 +112,16 @@ export const MilestoneManager = ({
         message: 'Failed to update milestone progress',
         description: error.response?.data?.detail || 'Please try again',
         duration: 7000,
-      })
+      });
     },
-  })
+  });
 
   // Complete milestone
   const completeMilestoneM = useMutation({
     mutationFn: (id: number) => milestoneAPI.complete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['milestones', projectId] })
-      queryClient.invalidateQueries({ queryKey: ['project', projectId.toString()] })
+      queryClient.invalidateQueries({ queryKey: ['milestones', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['project', projectId.toString()] });
     },
     onError: (error: any) => {
       addNotification({
@@ -129,16 +129,16 @@ export const MilestoneManager = ({
         message: 'Failed to mark milestone complete',
         description: error.response?.data?.detail || 'Please try again',
         duration: 7000,
-      })
+      });
     },
-  })
+  });
 
   // Delete milestone
   const deleteMilestoneM = useMutation({
     mutationFn: (id: number) => milestoneAPI.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['milestones', projectId] })
-      queryClient.invalidateQueries({ queryKey: ['project', projectId.toString()] })
+      queryClient.invalidateQueries({ queryKey: ['milestones', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['project', projectId.toString()] });
     },
     onError: (error: any) => {
       addNotification({
@@ -146,13 +146,19 @@ export const MilestoneManager = ({
         message: 'Failed to delete milestone',
         description: error.response?.data?.detail || 'Please try again',
         duration: 7000,
-      })
+      });
     },
-  })
+  });
 
   // Edit milestone details
   const editMilestoneDetailsM = useMutation({
-    mutationFn: (data: { id: number; title: string; description: string; due_date: string; progress: number }) =>
+    mutationFn: (data: {
+      id: number;
+      title: string;
+      description: string;
+      due_date: string;
+      progress: number;
+    }) =>
       milestoneAPI.update(data.id, {
         title: data.title,
         description: data.description,
@@ -160,9 +166,9 @@ export const MilestoneManager = ({
         progress: data.progress,
       }),
     onSuccess: () => {
-      setEditingId(null)
-      queryClient.invalidateQueries({ queryKey: ['milestones', projectId] })
-      queryClient.invalidateQueries({ queryKey: ['project', projectId.toString()] })
+      setEditingId(null);
+      queryClient.invalidateQueries({ queryKey: ['milestones', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['project', projectId.toString()] });
     },
     onError: (error: any) => {
       addNotification({
@@ -170,71 +176,80 @@ export const MilestoneManager = ({
         message: 'Failed to edit milestone',
         description: error.response?.data?.detail || 'Please try again',
         duration: 7000,
-      })
+      });
     },
-  })
+  });
 
   const handleCreateMilestone = () => {
     if (!newMilestone.title || !newMilestone.due_date) {
-      alert('Title and due date are required')
-      return
+      alert('Title and due date are required');
+      return;
     }
 
-    const progressValue = typeof newMilestone.progress === 'string'
-      ? (newMilestone.progress === '' ? 0 : parseInt(newMilestone.progress))
-      : newMilestone.progress
+    const progressValue =
+      typeof newMilestone.progress === 'string'
+        ? newMilestone.progress === ''
+          ? 0
+          : parseInt(newMilestone.progress)
+        : newMilestone.progress;
 
     createMilestoneM.mutate({
       ...newMilestone,
       progress: progressValue,
-    })
-  }
+    });
+  };
 
   const handleDeleteMilestone = (id: number) => {
     if (confirm('Are you sure you want to delete this milestone?')) {
-      deleteMilestoneM.mutate(id)
+      deleteMilestoneM.mutate(id);
     }
-  }
+  };
 
   const handleStartEdit = (milestone: Milestone) => {
-    setEditingId(milestone.id)
+    setEditingId(milestone.id);
     setEditMilestone({
       title: milestone.title,
       description: milestone.description || '',
       due_date: milestone.due_date,
       progress: milestone.progress,
-    })
-  }
+    });
+  };
 
   const handleSaveEdit = (id: number) => {
     if (!editMilestone.title || !editMilestone.due_date) {
-      alert('Title and due date are required')
-      return
+      alert('Title and due date are required');
+      return;
     }
-    const progressValue = typeof editMilestone.progress === 'string'
-      ? (editMilestone.progress === '' ? 0 : parseInt(editMilestone.progress))
-      : editMilestone.progress
+    const progressValue =
+      typeof editMilestone.progress === 'string'
+        ? editMilestone.progress === ''
+          ? 0
+          : parseInt(editMilestone.progress)
+        : editMilestone.progress;
     editMilestoneDetailsM.mutate({
       id,
       title: editMilestone.title,
       description: editMilestone.description,
       due_date: editMilestone.due_date,
       progress: progressValue,
-    })
-  }
+    });
+  };
 
   const handleCancelEdit = () => {
-    setEditingId(null)
-    setEditMilestone({ title: '', description: '', due_date: '', progress: 0 })
-  }
+    setEditingId(null);
+    setEditMilestone({ title: '', description: '', due_date: '', progress: 0 });
+  };
 
-  const displayMilestones = fetchedMilestones.length > 0 ? fetchedMilestones : milestones
+  const displayMilestones = fetchedMilestones.length > 0 ? fetchedMilestones : milestones;
 
   // Calculate overall progress
   const overallProgress =
     displayMilestones.length > 0
-      ? Math.round(displayMilestones.reduce((sum: number, m: Milestone) => sum + m.progress, 0) / displayMilestones.length)
-      : 0
+      ? Math.round(
+          displayMilestones.reduce((sum: number, m: Milestone) => sum + m.progress, 0) /
+            displayMilestones.length
+        )
+      : 0;
 
   return (
     <div className="space-y-6">
@@ -246,15 +261,11 @@ export const MilestoneManager = ({
           {showForm ? (
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Title
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
                 <input
                   type="text"
                   value={newMilestone.title}
-                  onChange={(e) =>
-                    setNewMilestone(prev => ({ ...prev, title: e.target.value }))
-                  }
+                  onChange={(e) => setNewMilestone((prev) => ({ ...prev, title: e.target.value }))}
                   placeholder="Milestone title"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
                   disabled={createMilestoneM.isPending}
@@ -262,13 +273,11 @@ export const MilestoneManager = ({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Description
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
                 <textarea
                   value={newMilestone.description}
                   onChange={(e) =>
-                    setNewMilestone(prev => ({ ...prev, description: e.target.value }))
+                    setNewMilestone((prev) => ({ ...prev, description: e.target.value }))
                   }
                   placeholder="Milestone description (optional)"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
@@ -279,14 +288,12 @@ export const MilestoneManager = ({
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Due Date
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Due Date</label>
                   <input
                     type="date"
                     value={newMilestone.due_date}
                     onChange={(e) =>
-                      setNewMilestone(prev => ({ ...prev, due_date: e.target.value }))
+                      setNewMilestone((prev) => ({ ...prev, due_date: e.target.value }))
                     }
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
                     disabled={createMilestoneM.isPending}
@@ -303,20 +310,21 @@ export const MilestoneManager = ({
                     max="100"
                     value={newMilestone.progress}
                     onChange={(e) => {
-                      const value = e.target.value
-                      setNewMilestone(prev => ({
+                      const value = e.target.value;
+                      setNewMilestone((prev) => ({
                         ...prev,
-                        progress: value === '' ? '' : Math.min(100, Math.max(0, parseInt(value) || 0)),
-                      }))
+                        progress:
+                          value === '' ? '' : Math.min(100, Math.max(0, parseInt(value) || 0)),
+                      }));
                     }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
                     disabled={createMilestoneM.isPending}
                     onBlur={(e) => {
                       if (e.target.value === '') {
-                        setNewMilestone(prev => ({
+                        setNewMilestone((prev) => ({
                           ...prev,
                           progress: 0,
-                        }))
+                        }));
                       }
                     }}
                   />
@@ -326,7 +334,9 @@ export const MilestoneManager = ({
               <div className="flex gap-2">
                 <button
                   onClick={handleCreateMilestone}
-                  disabled={createMilestoneM.isPending || !newMilestone.title || !newMilestone.due_date}
+                  disabled={
+                    createMilestoneM.isPending || !newMilestone.title || !newMilestone.due_date
+                  }
                   className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:bg-gray-400 transition-colors"
                 >
                   {createMilestoneM.isPending ? 'Creating...' : 'Create Milestone'}
@@ -373,7 +383,9 @@ export const MilestoneManager = ({
                   style={{ width: `${overallProgress}%` }}
                 />
               </div>
-              <span className="text-sm font-semibold text-gray-700 min-w-12">{overallProgress}%</span>
+              <span className="text-sm font-semibold text-gray-700 min-w-12">
+                {overallProgress}%
+              </span>
             </div>
           )}
         </div>
@@ -384,7 +396,9 @@ export const MilestoneManager = ({
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
             <p className="text-gray-500">No milestones yet</p>
             {canEdit && (
-              <p className="text-sm text-gray-400 mt-2">Create one to get started tracking progress</p>
+              <p className="text-sm text-gray-400 mt-2">
+                Create one to get started tracking progress
+              </p>
             )}
           </div>
         ) : (
@@ -403,7 +417,7 @@ export const MilestoneManager = ({
                           type="text"
                           value={editMilestone.title}
                           onChange={(e) =>
-                            setEditMilestone(prev => ({ ...prev, title: e.target.value }))
+                            setEditMilestone((prev) => ({ ...prev, title: e.target.value }))
                           }
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
                         />
@@ -415,7 +429,7 @@ export const MilestoneManager = ({
                         <textarea
                           value={editMilestone.description}
                           onChange={(e) =>
-                            setEditMilestone(prev => ({ ...prev, description: e.target.value }))
+                            setEditMilestone((prev) => ({ ...prev, description: e.target.value }))
                           }
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
                           rows={2}
@@ -429,7 +443,7 @@ export const MilestoneManager = ({
                           type="date"
                           value={editMilestone.due_date}
                           onChange={(e) =>
-                            setEditMilestone(prev => ({ ...prev, due_date: e.target.value }))
+                            setEditMilestone((prev) => ({ ...prev, due_date: e.target.value }))
                           }
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
                         />
@@ -445,11 +459,16 @@ export const MilestoneManager = ({
                             max="100"
                             value={editMilestone.progress}
                             onChange={(e) =>
-                              setEditMilestone(prev => ({ ...prev, progress: parseInt(e.target.value) }))
+                              setEditMilestone((prev) => ({
+                                ...prev,
+                                progress: parseInt(e.target.value),
+                              }))
                             }
                             className="flex-1"
                           />
-                          <span className="text-sm font-semibold text-gray-700 min-w-12">{editMilestone.progress}%</span>
+                          <span className="text-sm font-semibold text-gray-700 min-w-12">
+                            {editMilestone.progress}%
+                          </span>
                         </div>
                       </div>
                       <div className="flex gap-2">
@@ -497,59 +516,61 @@ export const MilestoneManager = ({
                       )}
                     </div>
 
-                <div className="space-y-3">
-                  {/* Progress Bar */}
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-gray-600">Progress</span>
-                      <span className="text-sm font-semibold text-gray-700">{milestone.progress}%</span>
-                    </div>
-                    <div className="flex gap-2">
-                      <div className="flex-1 bg-gray-200 rounded-full h-3">
-                        <div
-                          className="bg-blue-600 h-3 rounded-full transition-all"
-                          style={{ width: `${milestone.progress}%` }}
-                        />
+                    <div className="space-y-3">
+                      {/* Progress Bar */}
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm text-gray-600">Progress</span>
+                          <span className="text-sm font-semibold text-gray-700">
+                            {milestone.progress}%
+                          </span>
+                        </div>
+                        <div className="flex gap-2">
+                          <div className="flex-1 bg-gray-200 rounded-full h-3">
+                            <div
+                              className="bg-blue-600 h-3 rounded-full transition-all"
+                              style={{ width: `${milestone.progress}%` }}
+                            />
+                          </div>
+                          {canEdit && milestone.progress < 100 && (
+                            <button
+                              onClick={() => completeMilestoneM.mutate(milestone.id)}
+                              disabled={completeMilestoneM.isPending}
+                              className="px-3 py-1 bg-green-600 text-white rounded text-xs font-medium hover:bg-green-700 disabled:bg-gray-400 transition-colors whitespace-nowrap"
+                            >
+                              Mark Done
+                            </button>
+                          )}
+                        </div>
                       </div>
-                      {canEdit && milestone.progress < 100 && (
-                        <button
-                          onClick={() => completeMilestoneM.mutate(milestone.id)}
-                          disabled={completeMilestoneM.isPending}
-                          className="px-3 py-1 bg-green-600 text-white rounded text-xs font-medium hover:bg-green-700 disabled:bg-gray-400 transition-colors whitespace-nowrap"
-                        >
-                          Mark Done
-                        </button>
+
+                      {/* Progress Slider (if can edit) */}
+                      {canEdit && (
+                        <div>
+                          <input
+                            type="range"
+                            min="0"
+                            max="100"
+                            value={milestone.progress}
+                            onChange={(e) => {
+                              const newProgress = parseInt(e.target.value);
+                              const updated = milestones.map((m) =>
+                                m.id === milestone.id ? { ...m, progress: newProgress } : m
+                              );
+                              setMilestones(updated);
+                              updateMilestoneM.mutate({ id: milestone.id, progress: newProgress });
+                            }}
+                            disabled={updateMilestoneM.isPending}
+                            className="w-full"
+                          />
+                        </div>
                       )}
-                    </div>
-                  </div>
 
-                  {/* Progress Slider (if can edit) */}
-                  {canEdit && (
-                    <div>
-                      <input
-                        type="range"
-                        min="0"
-                        max="100"
-                        value={milestone.progress}
-                        onChange={(e) => {
-                          const newProgress = parseInt(e.target.value)
-                          const updated = milestones.map((m) =>
-                            m.id === milestone.id ? { ...m, progress: newProgress } : m
-                          )
-                          setMilestones(updated)
-                          updateMilestoneM.mutate({ id: milestone.id, progress: newProgress })
-                        }}
-                        disabled={updateMilestoneM.isPending}
-                        className="w-full"
-                      />
+                      {/* Due Date */}
+                      <div className="text-sm text-gray-600">
+                        Due: {new Date(milestone.due_date).toLocaleDateString()}
+                      </div>
                     </div>
-                  )}
-
-                    {/* Due Date */}
-                    <div className="text-sm text-gray-600">
-                      Due: {new Date(milestone.due_date).toLocaleDateString()}
-                    </div>
-                  </div>
                   </div>
                 )}
               </div>
@@ -558,5 +579,5 @@ export const MilestoneManager = ({
         )}
       </div>
     </div>
-  )
-}
+  );
+};

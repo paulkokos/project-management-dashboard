@@ -37,7 +37,6 @@ describe('SearchFilters', () => {
     expect(screen.getByText('Filters')).toBeInTheDocument();
   });
 
-
   it('renders status filter section', () => {
     renderSearchFilters();
 
@@ -141,9 +140,7 @@ describe('SearchFilters', () => {
   it('marks selected owner filter as checked', () => {
     renderSearchFilters({ selectedOwner: 'jane_smith' });
 
-    const janeRadio = screen.getByDisplayValue(
-      'jane_smith'
-    ) as HTMLInputElement;
+    const janeRadio = screen.getByDisplayValue('jane_smith') as HTMLInputElement;
     expect(janeRadio.checked).toBe(true);
   });
 
@@ -176,11 +173,10 @@ describe('SearchFilters', () => {
     const labels = container.querySelectorAll('label');
     expect(labels.length).toBeGreaterThan(0);
 
-    labels.forEach(label => {
+    labels.forEach((label) => {
       expect(label).toHaveClass('hover:bg-gray-50');
     });
   });
-
 
   it('displays filters in separate card containers', () => {
     const { container } = renderSearchFilters();

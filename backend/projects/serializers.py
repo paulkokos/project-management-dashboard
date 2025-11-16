@@ -559,9 +559,7 @@ class TaskCreateUpdateSerializer(serializers.ModelSerializer):
     def validate_progress(self, value):
         """Validate progress is between 0 and 100."""
         if not (0 <= value <= 100):
-            raise serializers.ValidationError(
-                "Progress must be between 0 and 100"
-            )
+            raise serializers.ValidationError("Progress must be between 0 and 100")
         return value
 
     def validate_estimated_hours(self, value):

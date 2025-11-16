@@ -1,60 +1,62 @@
-import { useState } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useNavigate } from 'react-router-dom'
-import { projectAPI } from '@/services'
-import { useAuthStore } from '@/stores/authStore'
-import { Project } from '@/types'
-import { canRestoreProject } from '@/utils/permissions'
+import { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
+import { projectAPI } from '@/services';
+import { useAuthStore } from '@/stores/authStore';
+import { Project } from '@/types';
+import { canRestoreProject } from '@/utils/permissions';
 
 export default function DeletedProjects() {
-  const navigate = useNavigate()
-  const queryClient = useQueryClient()
-  const { user } = useAuthStore()
-  const [restoreConfirm, setRestoreConfirm] = useState<{ id: number; title: string } | null>(null)
-  const [isRestoring, setIsRestoring] = useState(false)
-  const [emptyTrashConfirm, setEmptyTrashConfirm] = useState(false)
-  const [isEmptyingTrash, setIsEmptyingTrash] = useState(false)
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { user } = useAuthStore();
+  const [restoreConfirm, setRestoreConfirm] = useState<{ id: number; title: string } | null>(null);
+  const [isRestoring, setIsRestoring] = useState(false);
+  const [emptyTrashConfirm, setEmptyTrashConfirm] = useState(false);
+  const [isEmptyingTrash, setIsEmptyingTrash] = useState(false);
 
   // Fetch deleted projects
   const { data, isLoading } = useQuery({
     queryKey: ['deleted-projects'],
     queryFn: () => projectAPI.deleted(),
-  })
+  });
 
   // Handle both array format and paginated format
   const deletedProjects = Array.isArray(data?.data)
     ? data.data
-    : (Array.isArray(data) ? data : (data?.data?.results || []))
+    : Array.isArray(data)
+      ? data
+      : data?.data?.results || [];
 
   const handleRestoreProject = async () => {
-    if (!restoreConfirm) return
+    if (!restoreConfirm) return;
 
-    setIsRestoring(true)
+    setIsRestoring(true);
     try {
-      await projectAPI.restore(restoreConfirm.id)
-      setRestoreConfirm(null)
-      queryClient.invalidateQueries({ queryKey: ['deleted-projects'] })
-      queryClient.invalidateQueries({ queryKey: ['projects'] })
+      await projectAPI.restore(restoreConfirm.id);
+      setRestoreConfirm(null);
+      queryClient.invalidateQueries({ queryKey: ['deleted-projects'] });
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
     } catch {
       // Restore failed silently
     } finally {
-      setIsRestoring(false)
+      setIsRestoring(false);
     }
-  }
+  };
 
   const handleEmptyTrash = async () => {
-    setIsEmptyingTrash(true)
+    setIsEmptyingTrash(true);
     try {
-      await projectAPI.emptyTrash()
-      setEmptyTrashConfirm(false)
-      queryClient.invalidateQueries({ queryKey: ['deleted-projects'] })
-      queryClient.invalidateQueries({ queryKey: ['projects'] })
+      await projectAPI.emptyTrash();
+      setEmptyTrashConfirm(false);
+      queryClient.invalidateQueries({ queryKey: ['deleted-projects'] });
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
     } catch {
       // Empty trash failed silently
     } finally {
-      setIsEmptyingTrash(false)
+      setIsEmptyingTrash(false);
     }
-  }
+  };
 
   return (
     <div className="space-y-6">
@@ -90,7 +92,8 @@ export default function DeletedProjects() {
           <div className="bg-white rounded-lg p-6 max-w-sm">
             <h2 className="text-xl font-bold mb-4 text-red-600">Empty Trash?</h2>
             <p className="text-gray-600 mb-2">
-              This will permanently delete all {deletedProjects.length} deleted project{deletedProjects.length !== 1 ? 's' : ''}.
+              This will permanently delete all {deletedProjects.length} deleted project
+              {deletedProjects.length !== 1 ? 's' : ''}.
             </p>
             <p className="text-gray-600 mb-6 text-sm font-semibold">
               This action cannot be undone.
@@ -146,17 +149,20 @@ export default function DeletedProjects() {
       ) : (
         <div className="space-y-4">
           {deletedProjects.map((project: Project) => (
-            <div
-              key={project.id}
-              className="card flex justify-between items-start p-4"
-            >
+            <div key={project.id} className="card flex justify-between items-start p-4">
               <div className="flex-1">
                 <h3 className="text-lg font-bold">{project.title}</h3>
                 <p className="text-sm text-gray-600 mt-1">{project.description}</p>
                 <div className="mt-3 flex gap-4 text-sm text-gray-600">
-                  <span>Status: <strong className="capitalize">{project.status}</strong></span>
-                  <span>Health: <strong className="capitalize">{project.health}</strong></span>
-                  <span>Progress: <strong>{project.progress}%</strong></span>
+                  <span>
+                    Status: <strong className="capitalize">{project.status}</strong>
+                  </span>
+                  <span>
+                    Health: <strong className="capitalize">{project.health}</strong>
+                  </span>
+                  <span>
+                    Progress: <strong>{project.progress}%</strong>
+                  </span>
                 </div>
               </div>
               {canRestoreProject(user, project) ? (
@@ -180,5 +186,5 @@ export default function DeletedProjects() {
         </div>
       )}
     </div>
-  )
+  );
 }
