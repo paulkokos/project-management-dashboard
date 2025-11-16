@@ -8,7 +8,7 @@ from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.contrib.auth.models import User
 
-from projects.models import Activity, Project
+from projects.models import Activity, Comment, Project
 
 
 class ProjectUpdateConsumer(AsyncWebsocketConsumer):
