@@ -1,5 +1,5 @@
 # Core Django
-Django==5.1.4
+Django==5.2.8
 djangorestframework==3.16.1
 django-cors-headers==4.3.1
 django-filter==24.3
