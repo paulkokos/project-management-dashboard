@@ -610,12 +610,39 @@ class BulkOperationViewSet(viewsets.ViewSet):
 
 
 class RoleViewSet(viewsets.ReadOnlyModelViewSet):
-    """Provides a read-only endpoint for available Roles."""
+    """Provides a read-only endpoint for available Roles.
 
-    queryset = Role.objects.all()
+    Uses caching since Roles are infrequently changed reference data.
+    Cache is invalidated when roles are created/updated via admin.
+    """
+
     serializer_class = RoleSerializer
     permission_classes = [IsAuthenticated]
     ordering = ["sort_order", "display_name"]
+
+    def get_queryset(self):
+        """Get roles from cache if available, otherwise from database.
+
+        Roles are static reference data that rarely changes, so we cache
+        them for 1 hour to avoid repeated database queries.
+        """
+        from django.core.cache import cache
+
+        cache_key = "all_roles"
+        roles = cache.get(cache_key)
+
+        if roles is None:
+            roles = Role.objects.all().order_by("sort_order", "display_name")
+            cache.set(cache_key, list(roles), 3600)  # Cache for 1 hour
+
+        return roles
+
+    def list(self, request, *args, **kwargs):
+        """List roles with cache headers."""
+        response = super().list(request, *args, **kwargs)
+        # Tell clients to cache for 1 hour
+        response["Cache-Control"] = "public, max-age=3600"
+        return response
 
 
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
