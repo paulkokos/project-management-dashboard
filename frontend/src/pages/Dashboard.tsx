@@ -21,9 +21,7 @@ export default function Dashboard() {
 
   const projectsData = (projects?.data?.results || []) as Project[];
   const totalProjects = projects?.data?.count || 0;
-  const activeProjects = projectsData.filter(
-    (p: Project) => p.status === 'active'
-  ).length;
+  const activeProjects = projectsData.filter((p: Project) => p.status === 'active').length;
 
   return (
     <div className="space-y-8">
@@ -36,9 +34,7 @@ export default function Dashboard() {
         </div>
         <div className="card">
           <h3 className="text-lg font-semibold text-gray-700">Active</h3>
-          <p className="text-4xl font-bold text-green-600 mt-2">
-            {activeProjects}
-          </p>
+          <p className="text-4xl font-bold text-green-600 mt-2">{activeProjects}</p>
         </div>
         <div className="card">
           <h3 className="text-lg font-semibold text-gray-700">Health</h3>
@@ -64,16 +60,19 @@ export default function Dashboard() {
 
                 {/* Owner and Last Updated */}
                 <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
-                  <span>Owner: <span className="font-medium text-gray-700">{project.owner?.username || 'Unknown'}</span></span>
+                  <span>
+                    Owner:{' '}
+                    <span className="font-medium text-gray-700">
+                      {project.owner?.username || 'Unknown'}
+                    </span>
+                  </span>
                   <span title={new Date(project.updated_at).toLocaleString()}>
                     {new Date(project.updated_at).toLocaleDateString()}
                   </span>
                 </div>
 
                 <Link to={`/projects/${project.id}`}>
-                  <p className="text-sm text-gray-600 line-clamp-2 mt-1">
-                    {project.description}
-                  </p>
+                  <p className="text-sm text-gray-600 line-clamp-2 mt-1">{project.description}</p>
 
                   {/* Tags */}
                   {project.tags && project.tags.length > 0 && (
@@ -104,9 +103,7 @@ export default function Dashboard() {
                       <span className={`status-badge status-${project.status}`}>
                         {project.status}
                       </span>
-                      <span className={`health-${project.health}`}>
-                        ● {project.health}
-                      </span>
+                      <span className={`health-${project.health}`}>● {project.health}</span>
                       <RiskBadge riskLevel={project.risk_level} />
                     </div>
 
@@ -118,9 +115,7 @@ export default function Dashboard() {
                           style={{ width: `${project.progress}%` }}
                         ></div>
                       </div>
-                      <p className="text-xs text-gray-600 mt-1">
-                        {project.progress}% complete
-                      </p>
+                      <p className="text-xs text-gray-600 mt-1">{project.progress}% complete</p>
                     </div>
 
                     {/* Team Count and Milestone Progress */}
@@ -149,4 +144,3 @@ export default function Dashboard() {
     </div>
   );
 }
-

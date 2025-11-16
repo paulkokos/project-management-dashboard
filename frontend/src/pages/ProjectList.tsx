@@ -29,7 +29,18 @@ export default function ProjectList() {
 
   // Fetch projects
   const { data, isLoading } = useQuery({
-    queryKey: ['projects', { page, status: statusFilter, health: healthFilter, owner: ownerFilter, tags: tagFilters, ordering: sortBy, search: searchTerm }],
+    queryKey: [
+      'projects',
+      {
+        page,
+        status: statusFilter,
+        health: healthFilter,
+        owner: ownerFilter,
+        tags: tagFilters,
+        ordering: sortBy,
+        search: searchTerm,
+      },
+    ],
     queryFn: () =>
       projectAPI.list({
         page,
@@ -68,10 +79,8 @@ export default function ProjectList() {
   };
 
   const toggleTagFilter = (tagId: number) => {
-    setTagFilters(prev =>
-      prev.includes(tagId)
-        ? prev.filter(id => id !== tagId)
-        : [...prev, tagId]
+    setTagFilters((prev) =>
+      prev.includes(tagId) ? prev.filter((id) => id !== tagId) : [...prev, tagId]
     );
     setPage(1);
   };
@@ -86,7 +95,8 @@ export default function ProjectList() {
     setPage(1);
   };
 
-  const hasActiveFilters = statusFilter || healthFilter || ownerFilter || tagFilters.length > 0 || searchTerm;
+  const hasActiveFilters =
+    statusFilter || healthFilter || ownerFilter || tagFilters.length > 0 || searchTerm;
 
   return (
     <div className="space-y-6">
@@ -95,7 +105,8 @@ export default function ProjectList() {
           <div className="bg-white rounded-lg p-6 max-w-sm">
             <h2 className="text-xl font-bold mb-4">Delete Project?</h2>
             <p className="text-gray-600 mb-6">
-              Are you sure you want to delete &quot;<strong>{deleteConfirm.title}</strong>&quot;? This action can be undone.
+              Are you sure you want to delete &quot;<strong>{deleteConfirm.title}</strong>&quot;?
+              This action can be undone.
             </p>
             <div className="flex gap-4">
               <button
@@ -217,7 +228,7 @@ export default function ProjectList() {
                       : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
                   }`}
                   style={{
-                    backgroundColor: tagFilters.includes(tag.id) ? tag.color : undefined
+                    backgroundColor: tagFilters.includes(tag.id) ? tag.color : undefined,
                   }}
                 >
                   {tag.name}
@@ -257,16 +268,19 @@ export default function ProjectList() {
 
                 {/* Owner and Last Updated */}
                 <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
-                  <span>Owner: <span className="font-medium text-gray-700">{project.owner?.username || 'Unknown'}</span></span>
+                  <span>
+                    Owner:{' '}
+                    <span className="font-medium text-gray-700">
+                      {project.owner?.username || 'Unknown'}
+                    </span>
+                  </span>
                   <span title={new Date(project.updated_at).toLocaleString()}>
                     {new Date(project.updated_at).toLocaleDateString()}
                   </span>
                 </div>
 
                 <Link to={`/projects/${project.id}`}>
-                  <p className="text-sm text-gray-600 line-clamp-2 mt-1">
-                    {project.description}
-                  </p>
+                  <p className="text-sm text-gray-600 line-clamp-2 mt-1">{project.description}</p>
 
                   {/* Tags */}
                   {project.tags && project.tags.length > 0 && (
@@ -297,9 +311,7 @@ export default function ProjectList() {
                       <span className={`status-badge status-${project.status}`}>
                         {project.status}
                       </span>
-                      <span className={`health-${project.health}`}>
-                        ● {project.health}
-                      </span>
+                      <span className={`health-${project.health}`}>● {project.health}</span>
                       <RiskBadge riskLevel={project.risk_level} />
                     </div>
 
@@ -311,9 +323,7 @@ export default function ProjectList() {
                           style={{ width: `${project.progress}%` }}
                         ></div>
                       </div>
-                      <p className="text-xs text-gray-600 mt-1">
-                        {project.progress}% complete
-                      </p>
+                      <p className="text-xs text-gray-600 mt-1">{project.progress}% complete</p>
                     </div>
 
                     {/* Team Count and Milestone Progress */}
@@ -345,9 +355,7 @@ export default function ProjectList() {
                   key={i + 1}
                   onClick={() => setPage(i + 1)}
                   className={`px-4 py-2 rounded ${
-                    page === i + 1
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-200 hover:bg-gray-300'
+                    page === i + 1 ? 'bg-blue-600 text-white' : 'bg-gray-200 hover:bg-gray-300'
                   }`}
                 >
                   {i + 1}

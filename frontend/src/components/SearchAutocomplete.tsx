@@ -42,10 +42,7 @@ export function SearchAutocomplete({
   // Close suggestions when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (
-        suggestionsRef.current &&
-        !suggestionsRef.current.contains(e.target as Node)
-      ) {
+      if (suggestionsRef.current && !suggestionsRef.current.contains(e.target as Node)) {
         setShowSuggestions(false);
       }
     };
@@ -67,12 +64,9 @@ export function SearchAutocomplete({
     }
   };
 
-  const suggestionsList =
-    suggestions?.data?.suggestions || [];
+  const suggestionsList = suggestions?.data?.suggestions || [];
   const shouldShowSuggestions =
-    showSuggestions &&
-    debouncedValue.length >= 2 &&
-    suggestionsList.length > 0;
+    showSuggestions && debouncedValue.length >= 2 && suggestionsList.length > 0;
 
   return (
     <div className="relative" ref={suggestionsRef}>
@@ -102,12 +96,8 @@ export function SearchAutocomplete({
                   onClick={() => handleSuggestionClick(suggestion)}
                   className="w-full text-left px-4 py-3 hover:bg-gray-100 transition-colors"
                 >
-                  <div className="font-medium text-gray-900">
-                    {suggestion.title}
-                  </div>
-                  <div className="text-xs text-gray-500 capitalize">
-                    {suggestion.type}
-                  </div>
+                  <div className="font-medium text-gray-900">{suggestion.title}</div>
+                  <div className="text-xs text-gray-500 capitalize">{suggestion.type}</div>
                 </button>
               </li>
             ))}
@@ -115,10 +105,7 @@ export function SearchAutocomplete({
         </div>
       )}
 
-      {value.length >= 2 &&
-        !isLoading &&
-        suggestionsList.length === 0 &&
-        showSuggestions && (
+      {value.length >= 2 && !isLoading && suggestionsList.length === 0 && showSuggestions && (
         <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-50 p-4 text-center text-gray-500">
           No suggestions found
         </div>

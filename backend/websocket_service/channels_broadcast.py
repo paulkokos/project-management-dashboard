@@ -115,25 +115,27 @@ def broadcast_milestone_change(project_id, event_type, milestone_data=None):
         logger.error(f"Error broadcasting milestone change: {e}")
 
 
-def broadcast_comment_event(project_id, event_type, comment_data):
-    """Broadcast comment events to all connected clients for a project"""
+def broadcast_task_change(project_id, event_type, task_data=None):
+    """Broadcast task changes in real-time"""
     from channels.layers import get_channel_layer
 
     try:
         channel_layer = get_channel_layer()
-        room_name = f"comments_{project_id}"
+        room_name = f"project_tasks_{project_id}"
 
         payload = {
-            "type": event_type,  # comment_created, comment_updated, comment_deleted, comment_replied
+            "type": event_type,
+            "project_id": project_id,
+            "timestamp": timezone.now().isoformat(),
             "data": {
                 "type": event_type,
                 "project_id": project_id,
                 "timestamp": timezone.now().isoformat(),
-                "comment": comment_data,
-            }
+                "task": task_data or {},
+            },
         }
 
         async_to_sync(channel_layer.group_send)(room_name, payload)
-        logger.info(f"Broadcasted comment {event_type} for project {project_id}")
+        logger.info(f"Broadcasted task {event_type} for project {project_id}")
     except Exception as e:
-        logger.error(f"Error broadcasting comment event: {e}", exc_info=True)
+        logger.error(f"Error broadcasting task change: {e}")
