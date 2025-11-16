@@ -64,9 +64,8 @@ export default function Settings() {
       setProfileDirty(false);
       addNotification('Profile updated successfully', 'success');
     } catch (err: any) {
-      const errorMessage = err.response?.data?.email?.[0] ||
-                          err.response?.data?.detail ||
-                          'Failed to update profile';
+      const errorMessage =
+        err.response?.data?.email?.[0] || err.response?.data?.detail || 'Failed to update profile';
       setError(errorMessage);
       addNotification(errorMessage, 'error');
     } finally {
@@ -114,9 +113,10 @@ export default function Settings() {
 
       addNotification('Password changed successfully', 'success');
     } catch (err: any) {
-      const errorMessage = err.response?.data?.current_password?.[0] ||
-                          err.response?.data?.detail ||
-                          'Failed to change password';
+      const errorMessage =
+        err.response?.data?.current_password?.[0] ||
+        err.response?.data?.detail ||
+        'Failed to change password';
       setError(errorMessage);
       addNotification(errorMessage, 'error');
     } finally {
@@ -209,9 +209,7 @@ export default function Settings() {
                 <form onSubmit={handleProfileSubmit} className="space-y-6 max-w-2xl">
                   {/* Username (Read-only) */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Username
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Username</label>
                     <input
                       type="text"
                       value={user.username}
@@ -238,7 +236,10 @@ export default function Settings() {
 
                   {/* First Name */}
                   <div>
-                    <label htmlFor="first_name" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label
+                      htmlFor="first_name"
+                      className="block text-sm font-medium text-gray-700 mb-2"
+                    >
                       First Name
                     </label>
                     <input
@@ -253,7 +254,10 @@ export default function Settings() {
 
                   {/* Last Name */}
                   <div>
-                    <label htmlFor="last_name" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label
+                      htmlFor="last_name"
+                      className="block text-sm font-medium text-gray-700 mb-2"
+                    >
                       Last Name
                     </label>
                     <input
@@ -287,7 +291,10 @@ export default function Settings() {
                 <form onSubmit={handlePasswordSubmit} className="space-y-6 max-w-2xl">
                   {/* Current Password */}
                   <div>
-                    <label htmlFor="current_password" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label
+                      htmlFor="current_password"
+                      className="block text-sm font-medium text-gray-700 mb-2"
+                    >
                       Current Password
                     </label>
                     <div className="relative">
@@ -302,7 +309,9 @@ export default function Settings() {
                       />
                       <button
                         type="button"
-                        onClick={() => setShowPasswords((prev) => ({ ...prev, current: !prev.current }))}
+                        onClick={() =>
+                          setShowPasswords((prev) => ({ ...prev, current: !prev.current }))
+                        }
                         className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
                       >
                         {showPasswords.current ? '👁️' : '👁️‍🗨️'}
@@ -312,7 +321,10 @@ export default function Settings() {
 
                   {/* New Password */}
                   <div>
-                    <label htmlFor="new_password" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label
+                      htmlFor="new_password"
+                      className="block text-sm font-medium text-gray-700 mb-2"
+                    >
                       New Password
                     </label>
                     <div className="relative">
@@ -339,7 +351,10 @@ export default function Settings() {
 
                   {/* Confirm Password */}
                   <div>
-                    <label htmlFor="new_password_confirm" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label
+                      htmlFor="new_password_confirm"
+                      className="block text-sm font-medium text-gray-700 mb-2"
+                    >
                       Confirm New Password
                     </label>
                     <div className="relative">
@@ -356,7 +371,9 @@ export default function Settings() {
                       />
                       <button
                         type="button"
-                        onClick={() => setShowPasswords((prev) => ({ ...prev, confirm: !prev.confirm }))}
+                        onClick={() =>
+                          setShowPasswords((prev) => ({ ...prev, confirm: !prev.confirm }))
+                        }
                         className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
                       >
                         {showPasswords.confirm ? '👁️' : '👁️‍🗨️'}
@@ -401,7 +418,8 @@ export default function Settings() {
                     <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
                       <h3 className="text-lg font-bold text-gray-900 mb-4">Delete Account</h3>
                       <p className="text-gray-600 mb-4">
-                        This action is permanent and cannot be undone. Type <strong>DELETE</strong> to confirm.
+                        This action is permanent and cannot be undone. Type <strong>DELETE</strong>{' '}
+                        to confirm.
                       </p>
                       <input
                         type="text"
