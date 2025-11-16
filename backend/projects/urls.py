@@ -12,12 +12,14 @@ from .views import (
     ProjectViewSet,
     RoleViewSet,
     TagViewSet,
+    TaskViewSet,
     UserViewSet,
 )
 
 router = DefaultRouter()
 router.register(r"projects", ProjectViewSet, basename="project")
 router.register(r"milestones", MilestoneViewSet, basename="milestone")
+router.register(r"tasks", TaskViewSet, basename="task")
 router.register(r"tags", TagViewSet, basename="tag")
 router.register(r"roles", RoleViewSet, basename="role")
 router.register(r"users", UserViewSet, basename="user")
