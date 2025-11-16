@@ -4,7 +4,7 @@ Views for Project API
 
 from django.contrib.auth.models import User
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Count, Prefetch, Q
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -100,23 +100,38 @@ class ProjectViewSet(viewsets.ModelViewSet):
     ordering = ["-updated_at"]
 
     def get_queryset(self):
-        """Get projects filtered by user's ownership or team membership"""
+        """Get projects filtered by user's ownership or team membership with optimized queries"""
         user = self.request.user
+
+        # Base queryset with optimizations to prevent N+1 queries
+        base_queryset = Project.objects.select_related("owner").prefetch_related(
+            "tags",
+            Prefetch(
+                "team_members_details",
+                queryset=TeamMember.objects.select_related("user", "role"),
+            ),
+            Prefetch(
+                "milestones",
+                queryset=Milestone.objects.order_by("due_date"),
+            ),
+            Prefetch(
+                "activities",
+                queryset=Activity.objects.select_related("user").order_by("-created_at")[:10],
+            ),
+        ).annotate(
+            # Annotate counts to avoid N+1 queries in serializers
+            team_member_count=Count("team_members_details", distinct=True),
+            milestone_count=Count("milestones", distinct=True),
+        )
 
         # Admin users can see all projects
         if user.is_superuser:
-            return (
-                Project.objects.all()
-                .select_related("owner")
-                .prefetch_related("tags", "team_members_details", "milestones")
-            )
+            return base_queryset
 
         # Return projects where user is owner OR a team member
         return (
-            Project.objects.filter(Q(owner=user) | Q(team_members_details__user=user))
+            base_queryset.filter(Q(owner=user) | Q(team_members_details__user=user))
             .distinct()
-            .select_related("owner")
-            .prefetch_related("tags", "team_members_details", "milestones")
         )
 
     def get_serializer_class(self):
