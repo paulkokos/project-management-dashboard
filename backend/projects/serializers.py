@@ -273,7 +273,8 @@ class ProjectListSerializer(serializers.ModelSerializer):
 
     This serializer provides a more lightweight representation of a project,
     suitable for list views. It includes several calculated fields for
-    displaying summary information.
+    displaying summary information. Uses annotated counts from queryset to
+    prevent N+1 queries.
     """
 
     owner = UserSimpleSerializer(read_only=True)
@@ -310,16 +311,25 @@ class ProjectListSerializer(serializers.ModelSerializer):
         ]
 
     def get_team_count(self, obj):
-        """Returns the number of team members on the project."""
+        """Returns the number of team members on the project.
+        Uses annotated value from queryset if available to avoid N+1 queries."""
+        if hasattr(obj, "team_member_count"):
+            return obj.team_member_count
         return obj.team_members.count()
 
     def get_milestone_count(self, obj):
-        """Returns the total number of milestones for the project."""
-        return obj.milestone_count
+        """Returns the total number of milestones for the project.
+        Uses annotated value from queryset if available to avoid N+1 queries."""
+        if hasattr(obj, "milestone_count") and isinstance(obj.milestone_count, int):
+            return obj.milestone_count
+        return obj.milestones.count()
 
     def get_completed_milestone_count(self, obj):
-        """Returns the number of completed milestones."""
-        return obj.completed_milestone_count
+        """Returns the number of completed milestones.
+        Calculates from prefetched milestones to avoid additional queries."""
+        if hasattr(obj, "milestones"):
+            return sum(1 for m in obj.milestones.all() if m.progress == 100)
+        return obj.milestones.filter(progress=100).count()
 
     def get_days_until_deadline(self, obj):
         """Returns the number of days until the project deadline."""
