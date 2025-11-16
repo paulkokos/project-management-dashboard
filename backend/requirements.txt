@@ -39,7 +39,7 @@ Pillow==11.0.0
 requests==2.32.5
 
 # Testing
-pytest==8.0.2
+pytest==9.0.1
 pytest-django==4.7.0
 pytest-cov==4.1.0
 factory-boy==3.3.0
