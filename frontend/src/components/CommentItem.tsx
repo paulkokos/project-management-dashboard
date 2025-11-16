@@ -33,7 +33,6 @@ export const CommentItem: FC<CommentItemProps> = ({
   content,
   author,
   created_at,
-  updated_at,
   is_edited,
   reply_count,
   onEdit,
