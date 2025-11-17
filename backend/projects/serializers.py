@@ -221,6 +221,8 @@ class TeamMemberSerializer(serializers.ModelSerializer):
 class MilestoneSerializer(serializers.ModelSerializer):
     """Serializer for the Milestone model."""
 
+    due_date = serializers.DateField(required=False, allow_null=True)
+
     class Meta:
         model = Milestone
         fields = [
@@ -240,12 +242,16 @@ class MilestoneSerializer(serializers.ModelSerializer):
         return value
 
     def validate_due_date(self, value):
-        """Ensures that the due date is not in the past."""
-        from django.utils import timezone
-
-        if value and value < timezone.now().date():
-            raise serializers.ValidationError("Due date must be in the future")
+        """Validates due date (allows past dates)."""
         return value
+
+    def create(self, validated_data):
+        """Create milestone with optional due_date"""
+        if 'due_date' not in validated_data or validated_data['due_date'] is None:
+            from datetime import timedelta
+            from django.utils import timezone
+            validated_data['due_date'] = timezone.now().date() + timedelta(days=30)
+        return super().create(validated_data)
 
 
 class ActivitySerializer(serializers.ModelSerializer):

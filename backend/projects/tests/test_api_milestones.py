@@ -93,7 +93,6 @@ class MilestoneAPITests(TestCase):
             "title": "New Milestone",
             "description": "New phase",
             "progress": 0,
-            "project_id": self.project.id,
         }
         response = self.client.post(
             "/api/milestones/?project_id=" + str(self.project.id), data
@@ -108,7 +107,6 @@ class MilestoneAPITests(TestCase):
             "title": "Team Milestone",
             "description": "By team",
             "progress": 0,
-            "project_id": self.project.id,
         }
         response = self.client.post(
             "/api/milestones/?project_id=" + str(self.project.id), data
@@ -122,7 +120,6 @@ class MilestoneAPITests(TestCase):
             "title": "Unauthorized",
             "description": "Not allowed",
             "progress": 0,
-            "project_id": self.project.id,
         }
         response = self.client.post(
             "/api/milestones/?project_id=" + str(self.project.id), data
@@ -141,7 +138,6 @@ class MilestoneAPITests(TestCase):
             "description": "Has due date",
             "progress": 0,
             "due_date": due_date,
-            "project_id": self.project.id,
         }
         response = self.client.post(
             "/api/milestones/?project_id=" + str(self.project.id), data
@@ -164,7 +160,6 @@ class MilestoneAPITests(TestCase):
             "title": "Activity Milestone",
             "description": "Test activity",
             "progress": 0,
-            "project_id": self.project.id,
         }
         response = self.client.post(
             "/api/milestones/?project_id=" + str(self.project.id), data
@@ -420,7 +415,6 @@ class MilestoneAPITests(TestCase):
         data = {
             "title": "Another Milestone",
             "progress": 0,
-            "project_id": self.project.id,
         }
         response = self.client.post(
             "/api/milestones/?project_id=" + str(self.project.id), data
@@ -451,7 +445,6 @@ class MilestoneAPITests(TestCase):
             "title": "Past Milestone",
             "due_date": past_date,
             "progress": 0,
-            "project_id": self.project.id,
         }
         response = self.client.post(
             "/api/milestones/?project_id=" + str(self.project.id), data
