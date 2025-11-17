@@ -7,6 +7,7 @@ from rest_framework import serializers
 
 from .models import (
     Activity,
+    Comment,
     Milestone,
     Project,
     ProjectBulkOperation,
@@ -701,3 +702,47 @@ class TaskDetailSerializer(serializers.ModelSerializer):
         """Get nested subtasks with basic information."""
         subtasks = obj.subtasks.filter(deleted_at__isnull=True)
         return TaskListSerializer(subtasks, many=True).data
+
+
+class CommentSerializer(serializers.ModelSerializer):
+    """Serializer for comments with author information"""
+
+    author = UserSimpleSerializer(read_only=True)
+    reply_count = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = Comment
+        fields = [
+            "id",
+            "project",
+            "content",
+            "author",
+            "parent_comment",
+            "reply_count",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["created_at", "updated_at"]
+
+
+class CommentListSerializer(serializers.ModelSerializer):
+    """Serializer for listing comments with replies"""
+
+    author = UserSimpleSerializer(read_only=True)
+    replies = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Comment
+        fields = [
+            "id",
+            "content",
+            "author",
+            "replies",
+            "created_at",
+            "updated_at",
+        ]
+
+    def get_replies(self, obj):
+        """Get nested replies for this comment"""
+        replies = obj.replies.filter(deleted_at__isnull=True).order_by("created_at")
+        return CommentSerializer(replies, many=True).data

@@ -8,6 +8,7 @@ from rest_framework.routers import DefaultRouter
 from .search import ProjectSearchViewSet
 from .views import (
     BulkOperationViewSet,
+    CommentViewSet,
     MilestoneViewSet,
     ProjectViewSet,
     RoleViewSet,
@@ -20,6 +21,7 @@ router = DefaultRouter()
 router.register(r"projects", ProjectViewSet, basename="project")
 router.register(r"milestones", MilestoneViewSet, basename="milestone")
 router.register(r"tasks", TaskViewSet, basename="task")
+router.register(r"comments", CommentViewSet, basename="comment")
 router.register(r"tags", TagViewSet, basename="tag")
 router.register(r"roles", RoleViewSet, basename="role")
 router.register(r"users", UserViewSet, basename="user")
