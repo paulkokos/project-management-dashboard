@@ -8,30 +8,99 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('projects', '0005_add_task_model'),
+        ("projects", "0005_add_task_model"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Comment',
+            name="Comment",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('deleted_at', models.DateTimeField(blank=True, null=True)),
-                ('version', models.IntegerField(default=1)),
-                ('etag', models.CharField(editable=False, max_length=32)),
-                ('content', models.TextField(help_text='Markdown-formatted comment content')),
-                ('edited_at', models.DateTimeField(blank=True, help_text='Timestamp when comment was last edited', null=True)),
-                ('edit_count', models.IntegerField(default=0, help_text='Number of times this comment has been edited')),
-                ('author', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='comments', to=settings.AUTH_USER_MODEL)),
-                ('parent_comment', models.ForeignKey(blank=True, help_text='Parent comment if this is a reply', null=True, on_delete=django.db.models.deletion.CASCADE, related_name='replies', to='projects.comment')),
-                ('project', models.ForeignKey(blank=True, help_text='Project this comment belongs to', null=True, on_delete=django.db.models.deletion.CASCADE, related_name='comments', to='projects.project')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("deleted_at", models.DateTimeField(blank=True, null=True)),
+                ("version", models.IntegerField(default=1)),
+                ("etag", models.CharField(editable=False, max_length=32)),
+                (
+                    "content",
+                    models.TextField(help_text="Markdown-formatted comment content"),
+                ),
+                (
+                    "edited_at",
+                    models.DateTimeField(
+                        blank=True,
+                        help_text="Timestamp when comment was last edited",
+                        null=True,
+                    ),
+                ),
+                (
+                    "edit_count",
+                    models.IntegerField(
+                        default=0,
+                        help_text="Number of times this comment has been edited",
+                    ),
+                ),
+                (
+                    "author",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="comments",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "parent_comment",
+                    models.ForeignKey(
+                        blank=True,
+                        help_text="Parent comment if this is a reply",
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="replies",
+                        to="projects.comment",
+                    ),
+                ),
+                (
+                    "project",
+                    models.ForeignKey(
+                        blank=True,
+                        help_text="Project this comment belongs to",
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="comments",
+                        to="projects.project",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-created_at'],
-                'indexes': [models.Index(fields=['project', '-created_at'], name='projects_co_project_6e0434_idx'), models.Index(fields=['author', '-created_at'], name='projects_co_author__d00d16_idx'), models.Index(fields=['parent_comment'], name='projects_co_parent__2be5fc_idx'), models.Index(fields=['deleted_at'], name='projects_co_deleted_603682_idx'), models.Index(fields=['created_at'], name='projects_co_created_b6b529_idx')],
+                "ordering": ["-created_at"],
+                "indexes": [
+                    models.Index(
+                        fields=["project", "-created_at"],
+                        name="projects_co_project_6e0434_idx",
+                    ),
+                    models.Index(
+                        fields=["author", "-created_at"],
+                        name="projects_co_author__d00d16_idx",
+                    ),
+                    models.Index(
+                        fields=["parent_comment"], name="projects_co_parent__2be5fc_idx"
+                    ),
+                    models.Index(
+                        fields=["deleted_at"], name="projects_co_deleted_603682_idx"
+                    ),
+                    models.Index(
+                        fields=["created_at"], name="projects_co_created_b6b529_idx"
+                    ),
+                ],
             },
         ),
     ]

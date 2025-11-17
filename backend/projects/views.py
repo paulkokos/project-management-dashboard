@@ -117,7 +117,9 @@ class ProjectViewSet(viewsets.ModelViewSet):
         # Admin users can see all projects
         if not user.is_superuser:
             # Non-admin users only see projects they own or are a team member of
-            queryset = queryset.filter(Q(owner=user) | Q(team_members_details__user=user))
+            queryset = queryset.filter(
+                Q(owner=user) | Q(team_members_details__user=user)
+            )
 
         # Add prefetch_related and annotations before returning
         return (
@@ -1046,8 +1048,14 @@ class CommentViewSet(viewsets.ModelViewSet):
         try:
             project = Project.objects.get(pk=project_id)
             # Check if user has access to this project
-            if user.is_superuser or project.owner == user or project.team_members_details.filter(user=user).exists():
-                return Comment.objects.filter(project_id=project_id).select_related("author")
+            if (
+                user.is_superuser
+                or project.owner == user
+                or project.team_members_details.filter(user=user).exists()
+            ):
+                return Comment.objects.filter(project_id=project_id).select_related(
+                    "author"
+                )
             return Comment.objects.none()
         except Project.DoesNotExist:
             return Comment.objects.none()
