@@ -65,7 +65,7 @@ class ProjectSearchViewSet(viewsets.ViewSet):
 
             accessible_projects = (
                 Project.objects.filter(
-                    Q(owner=user) | Q(team_members__user=user), deleted_at__isnull=True
+                    Q(owner=user) | Q(team_members_details__user=user), deleted_at__isnull=True
                 )
                 .distinct()
                 .values_list("id", flat=True)
@@ -164,7 +164,7 @@ class ProjectSearchViewSet(viewsets.ViewSet):
 
             accessible_projects = (
                 Project.objects.filter(
-                    Q(owner=user) | Q(team_members__user=user), deleted_at__isnull=True
+                    Q(owner=user) | Q(team_members_details__user=user), deleted_at__isnull=True
                 )
                 .distinct()
                 .values_list("id", flat=True)
