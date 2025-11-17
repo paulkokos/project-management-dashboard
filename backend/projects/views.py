@@ -1027,6 +1027,7 @@ class CommentViewSet(viewsets.ModelViewSet):
 
     serializer_class = CommentSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = None
     filter_backends = [OrderingFilter]
     ordering_fields = ["created_at"]
     ordering = ["-created_at"]
