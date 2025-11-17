@@ -2,10 +2,10 @@
 Signal handlers for Projects app
 """
 
-from django.db.models.signals import post_delete, post_save
+from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-from .models import Activity, Milestone, Project, TeamMember
+from .models import Activity, Milestone, Project
 
 
 @receiver(post_save, sender=Milestone)

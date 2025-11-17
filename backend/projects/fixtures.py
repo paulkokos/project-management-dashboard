@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 
 from django.contrib.auth.models import User
 
-from .models import Activity, Milestone, Project, Role, Tag, TeamMember
+from .models import Milestone, Project, Role, Tag, TeamMember
 
 
 def create_admin_user():
@@ -403,7 +403,7 @@ def seed_database():
     create_test_milestones(projects)
 
     print("✅ Database seeding complete!")
-    print(f"   - Admin: 1")
+    print("   - Admin: 1")
     print(f"   - Users: {User.objects.count() - 1}")
     print(f"   - Tags: {Tag.objects.count()}")
     print(f"   - Projects: {Project.objects.count()}")

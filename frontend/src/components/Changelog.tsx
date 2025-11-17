@@ -16,6 +16,7 @@ interface ChangelogEntry {
   changed_fields: string[];
   previous_values: Record<string, unknown>;
   new_values: Record<string, unknown>;
+  change_reason?: string;
   created_at: string;
 }
 
@@ -149,13 +150,13 @@ export const Changelog: FC<ChangelogProps> = ({
                         <div>
                           <p className="text-xs font-semibold text-gray-500 mb-1">Before</p>
                           <p className="text-sm bg-red-50 text-red-700 p-2 rounded font-mono text-xs break-words">
-                            {entry.previous_values[field] || '(empty)'}
+                            {String(entry.previous_values[field] ?? '(empty)')}
                           </p>
                         </div>
                         <div>
                           <p className="text-xs font-semibold text-gray-500 mb-1">After</p>
                           <p className="text-sm bg-green-50 text-green-700 p-2 rounded font-mono text-xs break-words">
-                            {entry.new_values[field] || '(empty)'}
+                            {String(entry.new_values[field] ?? '(empty)')}
                           </p>
                         </div>
                       </div>

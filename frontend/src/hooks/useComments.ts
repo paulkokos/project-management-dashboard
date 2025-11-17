@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import apiClient from '@/services/apiClient';
+import apiClient from '@/services/api';
 
 interface Comment {
   id: number;
@@ -72,7 +72,7 @@ export function useCreateComment(projectId: number) {
         ...data,
         project_id: projectId,
       });
-      return response.data as Comment;
+      return response.data as CommentDetail;
     },
     onSuccess: (newComment) => {
       // Invalidate comments list to refetch
@@ -150,12 +150,7 @@ export function useFilteredComments(
   }
 ) {
   return useQuery({
-    queryKey: [
-      ...COMMENTS_QUERY_KEY,
-      projectId,
-      filters?.parentCommentId,
-      filters?.sortBy,
-    ],
+    queryKey: [...COMMENTS_QUERY_KEY, projectId, filters?.parentCommentId, filters?.sortBy],
     queryFn: async () => {
       const response = await apiClient.get('/comments/', {
         params: {

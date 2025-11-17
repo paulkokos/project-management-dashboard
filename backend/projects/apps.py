@@ -8,4 +8,4 @@ class ProjectsConfig(AppConfig):
 
     def ready(self):
         """Import signal handlers when the app is ready"""
-        import projects.signals  # noqa
+        import projects.signals  # noqa: F401  # type: ignore

@@ -9,6 +9,7 @@ WebSocket Authentication:
 """
 
 import os
+import urllib.parse
 
 from channels.auth import AuthMiddlewareStack
 from channels.routing import ProtocolTypeRouter, URLRouter
@@ -20,12 +21,13 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
 django_asgi_app = get_asgi_application()
 
 # Import WebSocket routing after Django initialization
-from core.routing import websocket_urlpatterns
+from core.routing import websocket_urlpatterns  # noqa: E402
 
 
 class JWTAuthMiddleware:
     """
-    Middleware to handle JWT authentication from Authorization header.
+    Middleware to handle JWT authentication from query parameters.
+    Browser WebSocket API doesn't support custom headers, so tokens come via query string.
     Falls back to session auth if JWT is not available.
     """
 
@@ -33,9 +35,17 @@ class JWTAuthMiddleware:
         self.inner = inner
 
     async def __call__(self, scope, receive, send):
+        # Try to get token from query string (WebSocket)
+        query_string = scope.get("query_string", b"").decode("utf-8")
+        if query_string:
+            params = urllib.parse.parse_qs(query_string)
+            if "token" in params:
+                token = params["token"][0]
+                scope["token"] = token
+
+        # Also try Authorization header (REST)
         headers = dict(scope.get("headers", []))
         auth_header = headers.get(b"authorization", b"").decode("utf-8")
-
         if auth_header.startswith("Bearer "):
             token = auth_header[7:]
             scope["token"] = token

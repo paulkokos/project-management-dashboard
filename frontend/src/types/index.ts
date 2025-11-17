@@ -11,7 +11,7 @@ export interface Tag {
   id: number;
   name: string;
   color: string;
-  description: string;
+  description?: string;
 }
 
 export interface Role {

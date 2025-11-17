@@ -1,0 +1,28 @@
+{
+  "extends": [
+    "stylelint-config-tailwindcss"
+  ],
+  "rules": {
+    "at-rule-no-unknown": [
+      true,
+      {
+        "ignoreAtRules": [
+          "tailwind",
+          "apply",
+          "layer",
+          "screen",
+          "supports"
+        ]
+      }
+    ],
+    "no-descending-specificity": null,
+    "selector-pseudo-class-no-unknown": [
+      true,
+      {
+        "ignorePseudoClasses": [
+          "global"
+        ]
+      }
+    ]
+  }
+}

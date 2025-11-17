@@ -13,7 +13,7 @@ import logging
 
 from asgiref.sync import sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
-from django.contrib.auth.models import AnonymousUser, User
+from django.contrib.auth.models import AnonymousUser
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.exceptions import InvalidToken
 
@@ -128,9 +128,15 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             http_request.META = {"HTTP_AUTHORIZATION": f"Bearer {token}"}
             drf_request = Request(http_request)
 
-            user, _ = auth.authenticate(drf_request)
+            result = auth.authenticate(drf_request)
+            if result is not None:
+                user, _ = result
+            else:
+                user = None
             if user:
-                logger.debug(f"JWT token validated for user {user.id} ({user.username})")
+                logger.debug(
+                    f"JWT token validated for user {user.id} ({user.username})"
+                )
                 return user
             else:
                 logger.warning("JWT token validated but no user returned")

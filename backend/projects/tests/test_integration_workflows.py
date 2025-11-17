@@ -12,7 +12,7 @@ from django.test import TestCase
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from projects.models import Activity, Milestone, Project, Role, TeamMember
+from projects.models import Milestone, Project, Role, TeamMember
 
 
 @pytest.mark.django_db
@@ -84,7 +84,7 @@ class WorkflowIntegrationTests(TestCase):
         # Step 3: Create milestones
         for i, phase in enumerate(["Design", "Development", "Testing", "Release"]):
             milestone_data = {
-                "title": f"Phase {i+1}: {phase}",
+                "title": f"Phase {i + 1}: {phase}",
                 "description": f"{phase} phase",
                 "progress": 0,
                 "project_id": project_id,
@@ -123,10 +123,12 @@ class WorkflowIntegrationTests(TestCase):
 
         # Create milestones
         milestone1 = Milestone.objects.create(
-            project=project, title="Milestone 1", progress=0
+            project=project, title="Milestone 1", progress=0,
+            due_date=datetime.now().date() + timedelta(days=30)
         )
         milestone2 = Milestone.objects.create(
-            project=project, title="Milestone 2", progress=0
+            project=project, title="Milestone 2", progress=0,
+            due_date=datetime.now().date() + timedelta(days=60)
         )
 
         self.client.force_authenticate(user=self.project_manager)
@@ -264,7 +266,8 @@ class WorkflowIntegrationTests(TestCase):
             title="Concurrent Test", owner=self.project_manager
         )
         milestone = Milestone.objects.create(
-            project=project, title="Test Milestone", progress=0
+            project=project, title="Test Milestone", progress=0,
+            due_date=datetime.now().date() + timedelta(days=30)
         )
 
         self.client.force_authenticate(user=self.project_manager)
@@ -392,7 +395,8 @@ class WorkflowIntegrationTests(TestCase):
         # Create milestones
         for i in range(5):
             Milestone.objects.create(
-                project=project, title=f"Milestone {i+1}", progress=0
+                project=project, title=f"Milestone {i + 1}", progress=0,
+                due_date=datetime.now().date() + timedelta(days=30 * (i + 1))
             )
 
         self.client.force_authenticate(user=self.project_manager)
@@ -409,7 +413,10 @@ class WorkflowIntegrationTests(TestCase):
         project = Project.objects.create(
             title="Error Recovery Test", owner=self.project_manager
         )
-        milestone = Milestone.objects.create(project=project, title="Test", progress=50)
+        milestone = Milestone.objects.create(
+            project=project, title="Test", progress=50,
+            due_date=datetime.now().date() + timedelta(days=30)
+        )
 
         self.client.force_authenticate(user=self.project_manager)
 

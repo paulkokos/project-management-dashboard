@@ -4,15 +4,13 @@ Tests role-based access control and security boundaries
 Covers Pfizer compliance requirements for access control
 """
 
-from datetime import datetime, timedelta
-
 import pytest
 from django.contrib.auth.models import User
 from django.test import TestCase
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from projects.models import Activity, Project, Role, Tag, TeamMember
+from projects.models import Project, Role, TeamMember
 
 
 @pytest.mark.django_db

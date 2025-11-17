@@ -15,6 +15,7 @@ from rest_framework.response import Response
 
 from core.exceptions import OptimisticConcurrencyException
 from websocket_service.channels_broadcast import (
+    broadcast_comment_change,
     broadcast_milestone_change,
     broadcast_project_update,
     broadcast_team_member_change,
@@ -45,7 +46,6 @@ from .serializers import (
     BulkUpdateSerializer,
     CommentSerializer,
     MilestoneSerializer,
-    ProjectBulkOperationSerializer,
     ProjectCreateUpdateSerializer,
     ProjectDetailSerializer,
     ProjectListSerializer,
@@ -230,7 +230,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
             project=project,
             activity_type="updated",
             user=request.user,
-            description=f"Project soft-deleted",
+            description="Project soft-deleted",
         )
         broadcast_project_update(
             project_id=project.id, event_type="deleted", data={"title": project.title}
@@ -269,7 +269,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
             project=project,
             activity_type="restored",
             user=request.user,
-            description=f"Project restored",
+            description="Project restored",
         )
         broadcast_project_update(
             project_id=project.id, event_type="restored", data={"title": project.title}
@@ -433,11 +433,11 @@ class ProjectViewSet(viewsets.ModelViewSet):
         user_id = request.query_params.get("user_id")
         start_date = request.query_params.get("start_date")
         end_date = request.query_params.get("end_date")
-        page = request.query_params.get("page", 1)
-        page_size = request.query_params.get("page_size", 20)
+        page = request.query_params.get("page", 1)  # noqa: F841
+        page_size = request.query_params.get("page_size", 20)  # noqa: F841
 
         # start with all activities inside this project
-        activities = project.activities.all()
+        activities = project.activities.all()  # noqa: F841
 
         queryset = project.activities.all()
         if activity_type:
@@ -471,8 +471,9 @@ class ProjectViewSet(viewsets.ModelViewSet):
         serializer = BulkUpdateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        project_ids = serializer.validated_data["project_ids"]
-        etag = serializer.validated_data["etag"]
+        validated = serializer.validated_data  # type: ignore
+        project_ids = validated.get("project_ids", [])
+        etag = validated.get("etag")
 
         try:
             with transaction.atomic():
@@ -497,14 +498,14 @@ class ProjectViewSet(viewsets.ModelViewSet):
                         )
 
                 # Update fields if provided
-                if "status" in serializer.validated_data:
-                    projects.update(status=serializer.validated_data["status"])
+                if "status" in validated:  # type: ignore
+                    projects.update(status=validated["status"])  # type: ignore
 
-                if "health" in serializer.validated_data:
-                    projects.update(health=serializer.validated_data["health"])
+                if "health" in validated:  # type: ignore
+                    projects.update(health=validated["health"])  # type: ignore
 
-                if "tags" in serializer.validated_data:
-                    tag_ids = serializer.validated_data["tags"]
+                if "tags" in validated:  # type: ignore
+                    tag_ids = validated["tags"]  # type: ignore
                     for project in projects:
                         project.tags.set(tag_ids)
 
@@ -628,21 +629,12 @@ class RoleViewSet(viewsets.ReadOnlyModelViewSet):
     ordering = ["sort_order", "display_name"]
 
     def get_queryset(self):
-        """Get roles from cache if available, otherwise from database.
+        """Get roles, always return QuerySet even if cached.
 
-        Roles are static reference data that rarely changes, so we cache
-        them for 1 hour to avoid repeated database queries.
+        Roles are static reference data that rarely changes.
         """
-        from django.core.cache import cache
-
-        cache_key = "all_roles"
-        roles = cache.get(cache_key)
-
-        if roles is None:
-            roles = Role.objects.all().order_by("sort_order", "display_name")
-            cache.set(cache_key, list(roles), 3600)  # Cache for 1 hour
-
-        return roles
+        # Always return fresh QuerySet - caching should be done at HTTP level
+        return Role.objects.all().order_by("sort_order", "display_name")
 
     def list(self, request, *args, **kwargs):
         """List roles with cache headers."""
@@ -688,7 +680,9 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
         )
         serializer.is_valid(raise_exception=True)
         user = request.user
-        user.set_password(serializer.validated_data["new_password"])
+        new_password = serializer.validated_data.get("new_password")
+        if new_password:
+            user.set_password(new_password)
         user.save()
         return Response({"message": "Password changed successfully"})
 
@@ -1068,8 +1062,29 @@ class CommentViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def perform_create(self, serializer):
-        """Save comment with current user as author"""
-        serializer.save(author=self.request.user)
+        """Save comment with current user as author and broadcast"""
+        comment = serializer.save(author=self.request.user)
+
+        # Broadcast comment creation to all project team members
+        project = comment.project
+        if project:
+            broadcast_comment_change(
+                project.id,
+                "comment_created",
+                {
+                    "id": comment.id,
+                    "content": comment.content,
+                    "author": {
+                        "id": comment.author.id,
+                        "username": comment.author.username,
+                        "first_name": comment.author.first_name,
+                        "last_name": comment.author.last_name,
+                    },
+                    "project_id": project.id,
+                    "created_at": comment.created_at.isoformat(),
+                    "parent_comment_id": comment.parent_comment_id,
+                },
+            )
 
     def perform_destroy(self, instance):
         """Soft delete comment"""

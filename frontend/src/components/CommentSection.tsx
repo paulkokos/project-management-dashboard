@@ -1,7 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { commentAPI } from '@/services';
+import type { Comment } from '@/services/comment.api';
 import { useAuthStore } from '@/stores/authStore';
 import { useNotification } from '@/contexts/NotificationContext';
+import { useWebSocket } from '@/hooks/useWebSocket';
 import CommentForm from './CommentForm';
 import CommentThread from './CommentThread';
 
@@ -13,6 +16,7 @@ export const CommentSection = ({ projectId }: CommentSectionProps) => {
   const { user } = useAuthStore();
   const { addNotification } = useNotification();
   const queryClient = useQueryClient();
+  const { on, off } = useWebSocket({ autoConnect: false });
 
   // Fetch comments for the project
   const { data: commentsResponse, isLoading } = useQuery({
@@ -20,15 +24,14 @@ export const CommentSection = ({ projectId }: CommentSectionProps) => {
     queryFn: () => commentAPI.list(projectId),
   });
 
-  // Handle both array and object responses
-  const comments = Array.isArray(commentsResponse?.data)
+  // Extract comments from response (API returns Comment[] directly)
+  const comments: Comment[] = Array.isArray(commentsResponse?.data)
     ? commentsResponse.data
-    : commentsResponse?.data?.results || [];
+    : [];
 
   // Create comment mutation
   const createMutation = useMutation({
-    mutationFn: (content: string) =>
-      commentAPI.create({ project: projectId, content }),
+    mutationFn: (content: string) => commentAPI.create({ project: projectId, content }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['comments', projectId] });
       addNotification({
@@ -74,6 +77,23 @@ export const CommentSection = ({ projectId }: CommentSectionProps) => {
     deleteMutation.mutate(commentId);
   };
 
+  // Listen to WebSocket comment change events
+  useEffect(() => {
+    const handleCommentChanged = (data: unknown) => {
+      // When a comment is created, updated, or deleted, invalidate the cache
+      const eventData = data as { data?: { project_id?: number }; project_id?: number };
+      if (eventData.data?.project_id === projectId || eventData.project_id === projectId) {
+        queryClient.invalidateQueries({ queryKey: ['comments', projectId] });
+      }
+    };
+
+    on('comment_changed', handleCommentChanged);
+
+    return () => {
+      off('comment_changed', handleCommentChanged);
+    };
+  }, [on, off, projectId, queryClient]);
+
   if (isLoading) {
     return <div className="text-center py-4">Loading comments...</div>;
   }
@@ -93,11 +113,9 @@ export const CommentSection = ({ projectId }: CommentSectionProps) => {
       {/* Comments list */}
       <div className="space-y-4">
         {comments.length === 0 ? (
-          <p className="text-center text-gray-500 py-8">
-            No comments yet. Be the first to share!
-          </p>
+          <p className="text-center text-gray-500 py-8">No comments yet. Be the first to share!</p>
         ) : (
-          comments.map((comment) => (
+          comments.map((comment: Comment) => (
             <CommentThread
               key={comment.id}
               id={comment.id}

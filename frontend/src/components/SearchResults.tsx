@@ -10,6 +10,19 @@ interface SearchResultsProps {
   currentPage: number;
 }
 
+const healthToRiskLevel = (health: string) => {
+  switch (health) {
+    case 'healthy':
+      return 'low';
+    case 'at_risk':
+      return 'high';
+    case 'critical':
+      return 'critical';
+    default:
+      return undefined;
+  }
+};
+
 export function SearchResults({ data, isLoading, onPageChange, currentPage }: SearchResultsProps) {
   if (isLoading) {
     return (
@@ -52,7 +65,7 @@ export function SearchResults({ data, isLoading, onPageChange, currentPage }: Se
                   Owner: <span className="font-medium text-gray-700">{result.owner.username}</span>
                 </p>
               </div>
-              <RiskBadge health={result.health} />
+              <RiskBadge riskLevel={healthToRiskLevel(result.health)} />
             </div>
 
             <p className="text-sm text-gray-600 line-clamp-2 mb-3">{result.description}</p>
@@ -120,11 +133,10 @@ export function SearchResults({ data, isLoading, onPageChange, currentPage }: Se
                     )}
                     <button
                       onClick={() => onPageChange(page)}
-                      className={`px-3 py-2 rounded-lg transition-colors ${
-                        page === currentPage
+                      className={`px-3 py-2 rounded-lg transition-colors ${page === currentPage
                           ? 'bg-blue-600 text-white'
                           : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
-                      }`}
+                        }`}
                     >
                       {page}
                     </button>

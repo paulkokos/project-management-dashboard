@@ -381,7 +381,7 @@ class MilestoneAPITests(TestCase):
     def test_delete_milestone_logs_activity(self):
         """Deleting milestone should log activity"""
         self.client.force_authenticate(user=self.owner)
-        milestone_title = self.milestone1.title
+        # milestone_title = self.milestone1.title  # noqa: F841
         response = self.client.delete(f"/api/milestones/{self.milestone1.id}/")
         assert response.status_code == status.HTTP_204_NO_CONTENT
 

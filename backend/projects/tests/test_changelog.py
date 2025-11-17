@@ -170,7 +170,7 @@ class ChangelogTests(TestCase):
         self.client.force_authenticate(user=self.owner)
 
         # Create activity in past
-        past_activity = Activity.objects.create(
+        past_activity = Activity.objects.create(  # noqa: F841
             project=self.project,
             activity_type="created",
             user=self.owner,

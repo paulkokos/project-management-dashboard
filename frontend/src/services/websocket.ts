@@ -5,13 +5,20 @@
 
 /**
  * Build WebSocket URL
- * Returns the base WebSocket URL without authentication
- * Authentication is handled via Authorization header in the connect method
+ * Returns the base WebSocket URL with token as query parameter
+ * Browser WebSocket API doesn't support custom headers, so we use query parameters
  */
-function getWebSocketUrl(): string {
+function getWebSocketUrl(token?: string): string {
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   const host = window.location.host;
-  return `${protocol}//${host}/ws/notifications/`;
+  const baseUrl = `${protocol}//${host}/ws/notifications/`;
+
+  // Append token as query parameter
+  if (token) {
+    return `${baseUrl}?token=${encodeURIComponent(token)}`;
+  }
+
+  return baseUrl;
 }
 
 export interface WebSocketMessage {
@@ -65,22 +72,12 @@ export class WebSocketService {
         return;
       }
 
-      const wsUrl = getWebSocketUrl();
+      const wsUrl = getWebSocketUrl(jwt);
       this.ws = new WebSocket(wsUrl);
 
       this.ws.onopen = () => {
         this.reconnectAttempts = 0;
         console.log('✅ WebSocket connected');
-
-        // Send authentication message (for reference, actual auth via middleware)
-        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-          this.ws.send(
-            JSON.stringify({
-              type: 'authenticate',
-              token: jwt,
-            })
-          );
-        }
 
         if (this.resolveConnect) {
           this.resolveConnect();

@@ -8,11 +8,10 @@ import logging
 from asgiref.sync import sync_to_async
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
-from django.contrib.auth.models import User, AnonymousUser
+from django.contrib.auth.models import AnonymousUser, User
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.exceptions import InvalidToken
 
-from projects.models import Activity, Comment, Project
 
 logger = logging.getLogger(__name__)
 
@@ -25,11 +24,11 @@ class ProjectUpdateConsumer(AsyncWebsocketConsumer):
 
     async def connect(self):
         """Handle WebSocket connection"""
-        self.project_id = self.scope["url_route"]["kwargs"]["project_id"]
+        self.project_id = self.scope["url_route"]["kwargs"]["project_id"]  # type: ignore
         self.project_group_name = f"project_updates_{self.project_id}"
 
         # Authenticate user from JWT token
-        self.user = await self.get_user_from_token()
+        self.user = await self.get_user_from_token()  # type: ignore
 
         if not self.user or not self.user.is_authenticated:
             logger.warning(
@@ -84,6 +83,10 @@ class ProjectUpdateConsumer(AsyncWebsocketConsumer):
         """Handle activity event from group"""
         await self.send(text_data=json.dumps(event["data"]))
 
+    async def comment_changed(self, event):
+        """Handle comment changes (created, updated, deleted, replied)"""
+        await self.send(text_data=json.dumps(event["data"]))
+
 
 class NotificationConsumer(AsyncWebsocketConsumer):
     """
@@ -93,7 +96,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
 
     async def connect(self):
         """Handle WebSocket connection"""
-        self.user_id = self.scope["user"].id
+        self.user_id = self.scope["user"].id  # type: ignore
         self.notification_group = f"notifications_{self.user_id}"
 
         await self.channel_layer.group_add(self.notification_group, self.channel_name)
@@ -120,7 +123,7 @@ class TaskUpdateConsumer(AsyncWebsocketConsumer):
 
     async def connect(self):
         """Handle WebSocket connection"""
-        self.project_id = self.scope["url_route"]["kwargs"]["project_id"]
+        self.project_id = self.scope["url_route"]["kwargs"]["project_id"]  # type: ignore
         self.project_tasks_group = f"project_tasks_{self.project_id}"
 
         # Authenticate user from JWT token
@@ -204,7 +207,7 @@ class TaskUpdateConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def verify_project_access(self):
         """Verify user has access to this project"""
-        from projects.models import Project, TeamMember
+        from projects.models import Project
         from projects.permissions import can_view_project_details
 
         try:
@@ -249,7 +252,11 @@ class TaskUpdateConsumer(AsyncWebsocketConsumer):
             drf_request = Request(http_request)
 
             try:
-                user, _ = auth.authenticate(drf_request)
+                result = auth.authenticate(drf_request)
+                if result is not None:
+                    user, _ = result
+                else:
+                    user = None
                 if user:
                     logger.info(f"✅ User {user.id} authenticated via JWT")
                     return user

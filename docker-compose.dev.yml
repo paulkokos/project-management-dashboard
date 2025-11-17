@@ -37,6 +37,26 @@ services:
     networks:
       - app_network_dev
 
+  # Elasticsearch for search functionality
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: project_dashboard_elasticsearch_dev
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health | grep -q '\"status\":\"green\"\\|\"status\":\"yellow\"'"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - elasticsearch_data_dev:/usr/share/elasticsearch/data
+    networks:
+      - app_network_dev
+
   # Django Backend (Development)
   backend:
     build:
@@ -68,6 +88,8 @@ services:
       db:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      elasticsearch:
         condition: service_healthy
     command: >
       sh -c "python manage.py makemigrations --noinput &&
@@ -103,3 +125,4 @@ networks:
 volumes:
   postgres_data_dev:
   redis_data_dev:
+  elasticsearch_data_dev:

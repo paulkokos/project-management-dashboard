@@ -3,6 +3,7 @@ Tests for Elasticsearch search functionality
 """
 
 import pytest
+from datetime import datetime, timedelta
 from django.contrib.auth.models import User
 from django.test import TestCase
 from rest_framework import status
@@ -79,12 +80,14 @@ class TestSearchAPI(TestCase):
             project=self.project1,
             title="Design Phase",
             description="UI/UX design for mobile apps",
+            due_date=datetime.now().date() + timedelta(days=30),
             progress=100,
         )
         Milestone.objects.create(
             project=self.project1,
             title="Development Phase",
             description="Implementation of mobile features",
+            due_date=datetime.now().date() + timedelta(days=60),
             progress=60,
         )
 
@@ -307,7 +310,7 @@ class TestSearchAPI(TestCase):
     def test_autocomplete_permission_filtering(self):
         """Test that autocomplete respects permissions"""
         # Create another project owned by different user
-        project_other = Project.objects.create(
+        project_other = Project.objects.create(  # noqa: F841
             title="Secret Project",
             description="Only visible to owner",
             owner=self.other_user,

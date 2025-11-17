@@ -11,7 +11,7 @@ from django.test import TestCase
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from projects.models import Activity, Milestone, Project, Role, Tag, TeamMember
+from projects.models import Activity, Project, Role, Tag, TeamMember
 
 
 @pytest.mark.django_db

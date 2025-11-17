@@ -1,0 +1,31 @@
+{
+  "include": [
+    "projects",
+    "core",
+    "websocket_service",
+    "config"
+  ],
+  "exclude": [
+    "**/node_modules",
+    "**/__pycache__",
+    ".venv",
+    "venv",
+    "**/migrations",
+    "manage.py"
+  ],
+  "typeCheckingMode": "basic",
+  "pythonVersion": "3.12",
+  "pythonPlatform": "Linux",
+  "venvPath": "/home/paulkokos/MyProjects/project-management-dashboard/backend/venv",
+  "reportMissingImports": true,
+  "reportMissingTypeStubs": false,
+  "reportGeneralTypeIssues": true,
+  "reportOptionalMemberAccess": false,
+  "reportOptionalSubscript": false,
+  "reportUnusedImport": true,
+  "reportUnusedClass": false,
+  "reportUnusedFunction": false,
+  "reportUnusedVariable": false,
+  "reportConstantRedefinition": false,
+  "reportAttributeAccessIssue": false
+}

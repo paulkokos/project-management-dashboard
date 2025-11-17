@@ -7,6 +7,7 @@ export interface Comment {
   author: {
     id: number;
     username: string;
+    email: string;
     first_name: string;
     last_name: string;
   };
@@ -14,6 +15,7 @@ export interface Comment {
   reply_count: number;
   created_at: string;
   updated_at: string;
+  is_edited: boolean;
   replies?: Comment[];
 }
 

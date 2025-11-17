@@ -62,12 +62,20 @@ export default function Settings() {
     try {
       await userAPI.updateProfile(profileData);
       setProfileDirty(false);
-      addNotification('Profile updated successfully', 'success');
+      addNotification({
+        type: 'success',
+        message: 'Profile updated successfully',
+        duration: 5000,
+      });
     } catch (err: any) {
       const errorMessage =
         err.response?.data?.email?.[0] || err.response?.data?.detail || 'Failed to update profile';
       setError(errorMessage);
-      addNotification(errorMessage, 'error');
+      addNotification({
+        type: 'error',
+        message: errorMessage,
+        duration: 5000,
+      });
     } finally {
       setLoading(false);
     }
@@ -111,14 +119,22 @@ export default function Settings() {
         new_password_confirm: '',
       });
 
-      addNotification('Password changed successfully', 'success');
+      addNotification({
+        type: 'success',
+        message: 'Password changed successfully',
+        duration: 5000,
+      });
     } catch (err: any) {
       const errorMessage =
         err.response?.data?.current_password?.[0] ||
         err.response?.data?.detail ||
         'Failed to change password';
       setError(errorMessage);
-      addNotification(errorMessage, 'error');
+      addNotification({
+        type: 'error',
+        message: errorMessage,
+        duration: 5000,
+      });
     } finally {
       setLoading(false);
     }
@@ -135,7 +151,11 @@ export default function Settings() {
 
     try {
       await userAPI.deleteAccount();
-      addNotification('Account deleted successfully', 'success');
+      addNotification({
+        type: 'success',
+        message: 'Account deleted successfully',
+        duration: 5000,
+      });
       // Logout and redirect
       setTimeout(() => {
         logout();
@@ -144,7 +164,11 @@ export default function Settings() {
     } catch (err: any) {
       const errorMessage = err.response?.data?.detail || 'Failed to delete account';
       setError(errorMessage);
-      addNotification(errorMessage, 'error');
+      addNotification({
+        type: 'error',
+        message: errorMessage,
+        duration: 5000,
+      });
     } finally {
       setLoading(false);
     }
@@ -182,11 +206,10 @@ export default function Settings() {
                     setActiveTab(tab.id as any);
                     setError('');
                   }}
-                  className={`py-4 px-6 border-b-2 font-medium text-sm ${
-                    activeTab === tab.id
+                  className={`py-4 px-6 border-b-2 font-medium text-sm ${activeTab === tab.id
                       ? 'border-blue-500 text-blue-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
+                    }`}
                 >
                   {tab.label}
                 </button>
@@ -310,11 +333,14 @@ export default function Settings() {
                       <button
                         type="button"
                         onClick={() =>
-                          setShowPasswords((prev) => ({ ...prev, current: !prev.current }))
+                          setShowPasswords((prev) => ({
+                            ...prev,
+                            current: !prev.current,
+                          }))
                         }
                         className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
                       >
-                        {showPasswords.current ? '👁️' : '👁️‍🗨️'}
+                        {showPasswords.current ? '👁' : '👁'}
                       </button>
                     </div>
                   </div>
@@ -341,10 +367,15 @@ export default function Settings() {
                       />
                       <button
                         type="button"
-                        onClick={() => setShowPasswords((prev) => ({ ...prev, new: !prev.new }))}
+                        onClick={() =>
+                          setShowPasswords((prev) => ({
+                            ...prev,
+                            new: !prev.new,
+                          }))
+                        }
                         className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
                       >
-                        {showPasswords.new ? '👁️' : '👁️‍🗨️'}
+                        {showPasswords.new ? '👁' : '👁'}
                       </button>
                     </div>
                   </div>
@@ -372,11 +403,14 @@ export default function Settings() {
                       <button
                         type="button"
                         onClick={() =>
-                          setShowPasswords((prev) => ({ ...prev, confirm: !prev.confirm }))
+                          setShowPasswords((prev) => ({
+                            ...prev,
+                            confirm: !prev.confirm,
+                          }))
                         }
                         className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
                       >
-                        {showPasswords.confirm ? '👁️' : '👁️‍🗨️'}
+                        {showPasswords.confirm ? '👁' : '👁'}
                       </button>
                     </div>
                   </div>

@@ -2,8 +2,6 @@
 Views for WebSocket service (REST endpoints for broadcasting)
 """
 
-import json
-
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.utils import timezone
@@ -12,7 +10,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from projects.models import Activity, Project
+from projects.models import Project
 from projects.serializers import ActivitySerializer
 
 
@@ -35,7 +33,7 @@ class BroadcastProjectUpdateView(APIView):
             )
 
         try:
-            project = Project.objects.get(id=project_id)
+            project = Project.objects.get(id=project_id)  # noqa: F841
         except Project.DoesNotExist:
             return Response(
                 {"error": "Project not found"}, status=status.HTTP_404_NOT_FOUND

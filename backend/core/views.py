@@ -14,11 +14,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from projects.serializers import (
-    ChangePasswordSerializer,
-    UserProfileSerializer,
-    UserRegistrationSerializer,
-)
+from projects.serializers import ChangePasswordSerializer, UserRegistrationSerializer
 
 
 class HealthCheckView(APIView):
@@ -128,7 +124,9 @@ class ChangePasswordView(APIView):
         serializer.is_valid(raise_exception=True)
 
         user = request.user
-        user.set_password(serializer.validated_data["new_password"])
+        new_password = serializer.validated_data.get("new_password")
+        if new_password:
+            user.set_password(new_password)
         user.save()
 
         return Response(

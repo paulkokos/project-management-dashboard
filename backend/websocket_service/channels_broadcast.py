@@ -2,11 +2,9 @@
 Broadcast utilities for real-time notifications using Django Channels
 """
 
-import asyncio
 import logging
 
 from asgiref.sync import async_to_sync
-from django.core.asgi import get_asgi_application
 from django.utils import timezone
 
 logger = logging.getLogger(__name__)
@@ -139,3 +137,25 @@ def broadcast_task_change(project_id, event_type, task_data=None):
         logger.info(f"Broadcasted task {event_type} for project {project_id}")
     except Exception as e:
         logger.error(f"Error broadcasting task change: {e}")
+
+
+def broadcast_comment_change(project_id, event_type, comment_data=None):
+    """Broadcast comment changes (created, updated, deleted, replied) in real-time"""
+    from channels.layers import get_channel_layer
+
+    try:
+        channel_layer = get_channel_layer()
+        room_name = f"project_{project_id}"
+
+        payload = {
+            "type": "comment_changed",
+            "event_type": event_type,
+            "project_id": project_id,
+            "timestamp": timezone.now().isoformat(),
+            "data": comment_data or {},
+        }
+
+        async_to_sync(channel_layer.group_send)(room_name, payload)
+        logger.info(f"Broadcasted comment {event_type} for project {project_id}")
+    except Exception as e:
+        logger.error(f"Error broadcasting comment change: {e}")

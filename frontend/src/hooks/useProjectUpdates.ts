@@ -169,8 +169,10 @@ export function useChangelogUpdates(projectId?: number) {
     subscribe(projectId);
 
     // Handler for activity/changelog updates
-    const handleActivityUpdate = (data: { project_id: number }) => {
-      if (data.project_id === projectId) {
+    const handleActivityUpdate = (data: unknown) => {
+      const activityData = data as { project_id: number };
+
+      if (activityData.project_id === projectId) {
         // Invalidate changelog cache to refresh with new entry
         queryClient.invalidateQueries({
           queryKey: ['changelog', projectId.toString()],

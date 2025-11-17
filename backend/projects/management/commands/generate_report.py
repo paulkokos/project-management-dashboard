@@ -6,7 +6,7 @@ Usage: python manage.py generate_report --format=json
 import json
 
 from django.core.management.base import BaseCommand
-from django.db.models import Avg, Count, Q
+from django.db.models import Avg, Count
 
 from projects.models import Activity, Project, Tag, TeamMember
 

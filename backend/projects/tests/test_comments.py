@@ -327,7 +327,7 @@ class CommentAPITests(TestCase):
             content="Comment in project 1", author=self.owner, project=self.project
         )
 
-        comment2 = Comment.objects.create(
+        comment2 = Comment.objects.create(  # noqa: F841
             content="Comment in project 2", author=self.owner, project=other_project
         )
 

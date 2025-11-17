@@ -1,10 +1,11 @@
 """Sanity tests to verify application structure"""
 
 import pytest
+from datetime import datetime, timedelta
 from django.contrib.auth.models import User
 from django.test import TestCase
 
-from projects.models import Activity, Milestone, Project, Tag, TeamMember
+from projects.models import Milestone, Project, Tag
 
 
 class ProjectModelTests(TestCase):
@@ -62,7 +63,8 @@ class MilestoneModelTests(TestCase):
     def test_milestone_creation(self):
         """Test that we can create a milestone"""
         milestone = Milestone.objects.create(
-            project=self.project, title="Sprint 1", progress=50
+            project=self.project, title="Sprint 1", progress=50,
+            due_date=datetime.now().date() + timedelta(days=30)
         )
         assert milestone.id is not None
         assert milestone.project == self.project
