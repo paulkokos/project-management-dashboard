@@ -451,6 +451,7 @@ class ProjectCreateUpdateSerializer(serializers.ModelSerializer):
     validation for fields like progress and handling date conversions.
     """
 
+    owner = UserSimpleSerializer(read_only=True)
     tag_ids = serializers.PrimaryKeyRelatedField(
         queryset=Tag.objects.all(),
         write_only=True,
@@ -466,11 +467,13 @@ class ProjectCreateUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
         fields = [
+            "id",
             "title",
             "description",
             "status",
             "health",
             "progress",
+            "owner",
             "start_date",
             "end_date",
             "tag_ids",
