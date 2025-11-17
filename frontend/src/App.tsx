@@ -14,6 +14,7 @@ import Signup from '@/pages/Signup';
 import Settings from '@/pages/Settings';
 import Search from '@/pages/Search';
 import { useAuthStore } from '@/stores/authStore';
+import { useWebSocket } from '@/hooks';
 import { NotificationProvider } from '@/contexts/NotificationContext';
 import { NotificationContainer } from '@/components/NotificationContainer';
 
@@ -27,6 +28,9 @@ function AppContent() {
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
+
+  // Initialize WebSocket connection when authenticated
+  useWebSocket({ autoConnect: isAuthenticated });
 
   // Auth routes - only show to unauthenticated users
   if (!isAuthenticated) {

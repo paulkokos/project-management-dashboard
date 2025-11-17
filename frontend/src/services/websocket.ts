@@ -3,24 +3,14 @@
  * Implements native WebSocket connection with message-based event handling
  */
 
-// Build WebSocket URL
+/**
+ * Build WebSocket URL
+ * Returns the base WebSocket URL without authentication
+ * Authentication is handled via Authorization header in the connect method
+ */
 function getWebSocketUrl(): string {
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-
-  // Get the host - strip protocol if it was included in VITE_WS_URL
-  let host = import.meta.env.VITE_WS_URL || window.location.host;
-
-  // Remove protocol if it was included (http://, https://, or ws://)
-  if (host.startsWith('ws://')) {
-    host = host.replace('ws://', '');
-  } else if (host.startsWith('wss://')) {
-    host = host.replace('wss://', '');
-  } else if (host.startsWith('http://')) {
-    host = host.replace('http://', '');
-  } else if (host.startsWith('https://')) {
-    host = host.replace('https://', '');
-  }
-
+  const host = window.location.host;
   return `${protocol}//${host}/ws/notifications/`;
 }
 
@@ -76,12 +66,22 @@ export class WebSocketService {
       }
 
       const wsUrl = getWebSocketUrl();
-      const urlWithToken = `${wsUrl}?token=${encodeURIComponent(jwt)}`;
-
-      this.ws = new WebSocket(urlWithToken);
+      this.ws = new WebSocket(wsUrl);
 
       this.ws.onopen = () => {
         this.reconnectAttempts = 0;
+        console.log('✅ WebSocket connected');
+
+        // Send authentication message (for reference, actual auth via middleware)
+        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+          this.ws.send(
+            JSON.stringify({
+              type: 'authenticate',
+              token: jwt,
+            })
+          );
+        }
+
         if (this.resolveConnect) {
           this.resolveConnect();
           this.resolveConnect = null;

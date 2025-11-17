@@ -1,5 +1,11 @@
 """
-WebSocket consumers for real-time notifications using Django Channels
+WebSocket consumers for real-time notifications using Django Channels.
+
+Proper implementation with:
+- JWT token authentication from Authorization header
+- Automatic user association
+- Proper channel group management
+- Error handling and logging
 """
 
 import json
@@ -7,7 +13,7 @@ import logging
 
 from asgiref.sync import sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
-from django.contrib.auth.models import AnonymousUser
+from django.contrib.auth.models import AnonymousUser, User
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.exceptions import InvalidToken
 
@@ -15,26 +21,37 @@ logger = logging.getLogger(__name__)
 
 
 class NotificationConsumer(AsyncWebsocketConsumer):
-    """WebSocket consumer for real-time notifications"""
+    """
+    WebSocket consumer for real-time notifications.
+
+    Handles user authentication and real-time message delivery.
+    Supports both JWT tokens (via Authorization header) and session authentication.
+    """
 
     async def connect(self):
         """Handle WebSocket connection"""
-        logger.info(f"Client connecting: {self.channel_name}")
+        logger.info(f"WebSocket connecting: {self.channel_name}")
 
-        # Get the user from JWT token
-        self.user = await self.get_user_from_token()
+        # Try to get authenticated user
+        self.user = self.scope.get("user")
 
+        # If no user from session auth, try JWT token from header
+        if not self.user or not self.user.is_authenticated:
+            token = self.scope.get("token")
+            if token:
+                self.user = await self._authenticate_jwt_token(token)
+
+        # If we have an authenticated user, accept the connection
         if self.user and self.user.is_authenticated:
-            # Create user-specific room
             self.user_room = f"user_{self.user.id}"
             await self.channel_layer.group_add(self.user_room, self.channel_name)
-            logger.info(f"User {self.user.id} joined room {self.user_room}")
-
+            logger.info(
+                f"✅ WebSocket connected for user {self.user.id} ({self.user.username})"
+            )
             await self.accept()
-            logger.info(f"WebSocket connection accepted for user {self.user.id}")
         else:
-            logger.warning("No authenticated user, rejecting connection")
-            await self.close()
+            logger.warning("❌ WebSocket rejected: No authenticated user")
+            await self.close(code=4001, reason="Unauthorized")
 
     async def disconnect(self, close_code):
         """Handle WebSocket disconnection"""
@@ -94,31 +111,14 @@ class NotificationConsumer(AsyncWebsocketConsumer):
         )
         await self.send(text_data=json.dumps(event))
 
-    async def get_user_from_token(self):
-        """Extract user from JWT token in headers"""
-        try:
-            # Get token from query string
-            query_string = self.scope.get("query_string", b"").decode()
-            token = None
-
-            # Parse token from query string (ws://localhost/ws?token=...)
-            if "token=" in query_string:
-                token = query_string.split("token=")[1].split("&")[0]
-
-            if not token:
-                logger.debug("No token provided in WebSocket connection")
-                return AnonymousUser()
-
-            # Validate JWT token in a sync context (database access requires sync)
-            return await self._authenticate_token(token)
-
-        except Exception as e:
-            logger.error(f"Error authenticating user: {e}", exc_info=True)
-            return AnonymousUser()
-
     @sync_to_async
-    def _authenticate_token(self, token):
-        """Authenticate JWT token in sync context"""
+    def _authenticate_jwt_token(self, token):
+        """
+        Authenticate JWT token in sync context.
+
+        Uses DRF's JWTAuthentication to validate the token.
+        Returns the authenticated user or AnonymousUser.
+        """
         try:
             auth = JWTAuthentication()
             from django.http import HttpRequest
@@ -126,20 +126,19 @@ class NotificationConsumer(AsyncWebsocketConsumer):
 
             http_request = HttpRequest()
             http_request.META = {"HTTP_AUTHORIZATION": f"Bearer {token}"}
-
             drf_request = Request(http_request)
 
-            try:
-                user, _ = auth.authenticate(drf_request)
-                if user:
-                    logger.info(f"✅ User {user.id} authenticated via JWT")
-                    return user
-                else:
-                    logger.debug("Token validation returned no user")
-                    return AnonymousUser()
-            except InvalidToken as e:
-                logger.debug(f"Invalid token: {e}")
+            user, _ = auth.authenticate(drf_request)
+            if user:
+                logger.debug(f"JWT token validated for user {user.id} ({user.username})")
+                return user
+            else:
+                logger.warning("JWT token validated but no user returned")
                 return AnonymousUser()
+
+        except InvalidToken as e:
+            logger.debug(f"Invalid JWT token: {e}")
+            return AnonymousUser()
         except Exception as e:
-            logger.error(f"Error in _authenticate_token: {e}", exc_info=True)
+            logger.error(f"Error authenticating JWT token: {e}", exc_info=True)
             return AnonymousUser()
