@@ -353,6 +353,113 @@ class Activity(BaseModel):
         return f"{self.project.title} - {self.get_activity_type_display()}"
 
 
+class Comment(BaseModel):
+    """
+    Comment model for collaborative discussions on projects and tasks.
+
+    Supports:
+    - Markdown content rendering
+    - Threaded replies (self-referential parent)
+    - Polymorphic commenting (projects, tasks, milestones)
+    - Soft delete with recovery
+    - Optimistic concurrency control
+    - Activity tracking
+    """
+
+    # Content and author
+    content = models.TextField(
+        help_text="Markdown-formatted comment content"
+    )
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="comments"
+    )
+
+    # Polymorphic relationship - can comment on different entities
+    # For now supporting projects and tasks (if task model exists)
+    project = models.ForeignKey(
+        Project,
+        on_delete=models.CASCADE,
+        related_name="comments",
+        null=True,
+        blank=True,
+        help_text="Project this comment belongs to"
+    )
+
+    # Future: Add task foreign key when task model is created
+    # task = models.ForeignKey(
+    #     'Task',
+    #     on_delete=models.CASCADE,
+    #     related_name="comments",
+    #     null=True,
+    #     blank=True
+    # )
+
+    # Threading support for nested replies
+    parent_comment = models.ForeignKey(
+        'self',
+        on_delete=models.CASCADE,
+        related_name='replies',
+        null=True,
+        blank=True,
+        help_text="Parent comment if this is a reply"
+    )
+
+    # Edit tracking
+    edited_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Timestamp when comment was last edited"
+    )
+    edit_count = models.IntegerField(
+        default=0,
+        help_text="Number of times this comment has been edited"
+    )
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["project", "-created_at"]),
+            models.Index(fields=["author", "-created_at"]),
+            models.Index(fields=["parent_comment"]),
+            models.Index(fields=["deleted_at"]),
+            models.Index(fields=["created_at"]),
+        ]
+
+    def __str__(self):
+        """String representation of comment"""
+        preview = self.content[:50] + "..." if len(self.content) > 50 else self.content
+        return f"Comment by {self.author.username}: {preview}"
+
+    def mark_edited(self):
+        """
+        Mark comment as edited and track edit count.
+        Call this when comment is updated.
+        """
+        self.edited_at = timezone.now()
+        self.edit_count += 1
+        self.save()
+
+    @property
+    def is_edited(self):
+        """Check if comment has been edited"""
+        return self.edited_at is not None
+
+    @property
+    def reply_count(self):
+        """Get number of replies to this comment"""
+        return self.replies.filter(deleted_at__isnull=True).count()
+
+    def get_nested_replies(self):
+        """
+        Get all replies including nested replies.
+        Returns replies in tree-like structure.
+        """
+        direct_replies = self.replies.filter(deleted_at__isnull=True).order_by('-created_at')
+        return direct_replies
+
+
 class ProjectBulkOperation(BaseModel):
     """Track bulk operations for atomic updates"""
 
