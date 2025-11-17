@@ -1050,9 +1050,10 @@ class CommentViewSet(viewsets.ModelViewSet):
                 return Comment.objects.filter(project_id=project_id).select_related(
                     "author"
                 )
-            return Comment.objects.none()
+            # User doesn't have access - raise permission denied
+            raise PermissionDenied("You do not have access to this project's comments")
         except Project.DoesNotExist:
-            return Comment.objects.none()
+            raise PermissionDenied("Project not found")
 
     def create(self, request, *args, **kwargs):
         """Create a new comment"""
@@ -1085,6 +1086,30 @@ class CommentViewSet(viewsets.ModelViewSet):
                     "parent_comment_id": comment.parent_comment_id,
                 },
             )
+
+    def get_object(self):
+        """Get a specific comment and check project access"""
+        # Bypass the queryset filter to get the comment directly
+        comment = Comment.objects.get(pk=self.kwargs.get('pk'))
+
+        # Check if user has access to the comment's project
+        user = self.request.user
+        project = comment.project
+        if not (
+            user.is_superuser
+            or project.owner == user
+            or project.team_members_details.filter(user=user).exists()
+        ):
+            raise PermissionDenied("You do not have access to this project's comments")
+
+        return comment
+
+    def perform_update(self, serializer):
+        """Update comment with permission check"""
+        instance = serializer.instance
+        if instance.author != self.request.user and not self.request.user.is_superuser:
+            raise PermissionDenied("You can only update your own comments")
+        serializer.save()
 
     def perform_destroy(self, instance):
         """Soft delete comment"""

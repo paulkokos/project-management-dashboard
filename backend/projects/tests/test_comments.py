@@ -152,8 +152,8 @@ class CommentAPITests(TestCase):
         )
 
         # Add member to project
-        role = Role.objects.create(
-            key="developer", display_name="Developer", color="blue"
+        role, _ = Role.objects.get_or_create(
+            key="developer", defaults={"display_name": "Developer", "color": "blue"}
         )
         TeamMember.objects.create(
             project=self.project, user=self.member, role=role, capacity=100
@@ -161,13 +161,13 @@ class CommentAPITests(TestCase):
 
     def test_list_comments_unauthenticated(self):
         """Test listing comments requires authentication"""
-        response = self.client.get(f"/comments/?project_id={self.project.id}")
+        response = self.client.get(f"/api/comments/?project_id={self.project.id}")
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
     def test_list_comments_unauthorized(self):
         """Test unrelated user cannot view project comments"""
         self.client.force_authenticate(user=self.unrelated)
-        response = self.client.get(f"/comments/?project_id={self.project.id}")
+        response = self.client.get(f"/api/comments/?project_id={self.project.id}")
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
     def test_list_comments_authorized(self):
@@ -177,7 +177,7 @@ class CommentAPITests(TestCase):
         )
 
         self.client.force_authenticate(user=self.owner)
-        response = self.client.get(f"/comments/?project_id={self.project.id}")
+        response = self.client.get(f"/api/comments/?project_id={self.project.id}")
 
         assert response.status_code == status.HTTP_200_OK
         assert len(response.data) == 1
@@ -188,7 +188,7 @@ class CommentAPITests(TestCase):
         """Test creating a comment"""
         self.client.force_authenticate(user=self.owner)
         data = {"content": "New comment", "project_id": self.project.id}
-        response = self.client.post("/comments/", data)
+        response = self.client.post("/api/comments/", data)
 
         assert response.status_code == status.HTTP_201_CREATED
         assert response.data["content"] == "New comment"
@@ -206,7 +206,7 @@ class CommentAPITests(TestCase):
             "parent_comment": parent.id,
             "project_id": self.project.id,
         }
-        response = self.client.post("/comments/", data)
+        response = self.client.post("/api/comments/", data)
 
         assert response.status_code == status.HTTP_201_CREATED
         assert response.data["parent_comment"] == parent.id
@@ -215,7 +215,7 @@ class CommentAPITests(TestCase):
         """Test creating comment with empty content fails"""
         self.client.force_authenticate(user=self.owner)
         data = {"content": "", "project_id": self.project.id}
-        response = self.client.post("/comments/", data)
+        response = self.client.post("/api/comments/", data)
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
@@ -223,7 +223,7 @@ class CommentAPITests(TestCase):
         """Test creating comment exceeding max length fails"""
         self.client.force_authenticate(user=self.owner)
         data = {"content": "a" * 5001, "project_id": self.project.id}
-        response = self.client.post("/comments/", data)
+        response = self.client.post("/api/comments/", data)
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
@@ -242,7 +242,7 @@ class CommentAPITests(TestCase):
             )
 
         self.client.force_authenticate(user=self.owner)
-        response = self.client.get(f"/comments/{parent.id}/")
+        response = self.client.get(f"/api/comments/{parent.id}/")
 
         assert response.status_code == status.HTTP_200_OK
         assert response.data["id"] == parent.id
@@ -257,7 +257,7 @@ class CommentAPITests(TestCase):
 
         self.client.force_authenticate(user=self.owner)
         data = {"content": "Updated content"}
-        response = self.client.patch(f"/comments/{comment.id}/", data)
+        response = self.client.patch(f"/api/comments/{comment.id}/", data)
 
         assert response.status_code == status.HTTP_200_OK
         assert response.data["content"] == "Updated content"
@@ -273,7 +273,7 @@ class CommentAPITests(TestCase):
 
         self.client.force_authenticate(user=self.member)
         data = {"content": "Hacked content"}
-        response = self.client.patch(f"/comments/{comment.id}/", data)
+        response = self.client.patch(f"/api/comments/{comment.id}/", data)
 
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
@@ -284,7 +284,7 @@ class CommentAPITests(TestCase):
         )
 
         self.client.force_authenticate(user=self.owner)
-        response = self.client.delete(f"/comments/{comment.id}/")
+        response = self.client.delete(f"/api/comments/{comment.id}/")
 
         assert response.status_code == status.HTTP_204_NO_CONTENT
 
@@ -298,7 +298,7 @@ class CommentAPITests(TestCase):
         )
 
         self.client.force_authenticate(user=self.member)
-        response = self.client.delete(f"/comments/{comment.id}/")
+        response = self.client.delete(f"/api/comments/{comment.id}/")
 
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
@@ -315,7 +315,7 @@ class CommentAPITests(TestCase):
             "parent_comment": parent.id,
             "project_id": self.project.id,
         }
-        response = self.client.post("/comments/", data)
+        response = self.client.post("/api/comments/", data)
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
@@ -332,7 +332,7 @@ class CommentAPITests(TestCase):
         )
 
         self.client.force_authenticate(user=self.owner)
-        response = self.client.get(f"/comments/?project_id={self.project.id}")
+        response = self.client.get(f"/api/comments/?project_id={self.project.id}")
 
         assert response.status_code == status.HTTP_200_OK
         assert len(response.data) == 1
