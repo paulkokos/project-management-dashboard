@@ -15,7 +15,7 @@ urlpatterns = [
     # Admin
     path("admin/", admin.site.urls),
     # API Documentation
-    path("api/docs/", include_docs_urls(title="Project Management API")),
+    # path("api/docs/", include_docs_urls(title="Project Management API")),
     # Authentication
     path("api/auth/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("api/auth/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),

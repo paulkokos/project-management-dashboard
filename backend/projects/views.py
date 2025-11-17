@@ -23,6 +23,7 @@ from websocket_service.channels_broadcast import (
 
 from .models import (
     Activity,
+    Comment,
     Milestone,
     Project,
     ProjectBulkOperation,
@@ -42,6 +43,7 @@ from .permissions import (
 from .serializers import (
     ActivitySerializer,
     BulkUpdateSerializer,
+    CommentSerializer,
     MilestoneSerializer,
     ProjectBulkOperationSerializer,
     ProjectCreateUpdateSerializer,
@@ -109,35 +111,32 @@ class ProjectViewSet(viewsets.ModelViewSet):
         """Get projects filtered by user's ownership or team membership with optimized queries"""
         user = self.request.user
 
-        # Base queryset with optimizations to prevent N+1 queries
-        base_queryset = Project.objects.select_related("owner").prefetch_related(
-            "tags",
-            Prefetch(
-                "team_members_details",
-                queryset=TeamMember.objects.select_related("user", "role"),
-            ),
-            Prefetch(
-                "milestones",
-                queryset=Milestone.objects.order_by("due_date"),
-            ),
-            Prefetch(
-                "activities",
-                queryset=Activity.objects.select_related("user").order_by("-created_at")[:10],
-            ),
-        ).annotate(
-            # Annotate counts to avoid N+1 queries in serializers
-            team_member_count=Count("team_members_details", distinct=True),
-            milestone_count=Count("milestones", distinct=True),
-        )
+        # Apply user filters first
+        queryset = Project.objects.select_related("owner")
 
         # Admin users can see all projects
-        if user.is_superuser:
-            return base_queryset
+        if not user.is_superuser:
+            # Non-admin users only see projects they own or are a team member of
+            queryset = queryset.filter(Q(owner=user) | Q(team_members_details__user=user))
 
-        # Return projects where user is owner OR a team member
+        # Add prefetch_related and annotations before returning
         return (
-            base_queryset.filter(Q(owner=user) | Q(team_members_details__user=user))
-            .distinct()
+            queryset.distinct()
+            .prefetch_related(
+                "tags",
+                Prefetch(
+                    "team_members_details",
+                    queryset=TeamMember.objects.select_related("user", "role"),
+                ),
+                Prefetch(
+                    "milestones",
+                    queryset=Milestone.objects.order_by("due_date"),
+                ),
+                # Note: activities prefetch removed due to Django slice limitations with filter
+            )
+            .annotate(
+                team_member_count=Count("team_members_details", distinct=True),
+            )
         )
 
     def get_serializer_class(self):
@@ -1025,3 +1024,47 @@ class TaskViewSet(viewsets.ModelViewSet):
 
         serializer = self.get_serializer(task)
         return Response(serializer.data)
+
+
+class CommentViewSet(viewsets.ModelViewSet):
+    """Provides CRUD operations for Comments."""
+
+    serializer_class = CommentSerializer
+    permission_classes = [IsAuthenticated]
+    filter_backends = [OrderingFilter]
+    ordering_fields = ["created_at"]
+    ordering = ["-created_at"]
+
+    def get_queryset(self):
+        """Get comments for projects the user has access to"""
+        user = self.request.user
+        project_id = self.request.query_params.get("project_id")
+
+        if not project_id:
+            return Comment.objects.none()
+
+        try:
+            project = Project.objects.get(pk=project_id)
+            # Check if user has access to this project
+            if user.is_superuser or project.owner == user or project.team_members_details.filter(user=user).exists():
+                return Comment.objects.filter(project_id=project_id).select_related("author")
+            return Comment.objects.none()
+        except Project.DoesNotExist:
+            return Comment.objects.none()
+
+    def create(self, request, *args, **kwargs):
+        """Create a new comment"""
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def perform_create(self, serializer):
+        """Save comment with current user as author"""
+        serializer.save(author=self.request.user)
+
+    def perform_destroy(self, instance):
+        """Soft delete comment"""
+        if instance.author != self.request.user and not self.request.user.is_superuser:
+            raise PermissionDenied("You can only delete your own comments")
+        instance.soft_delete()

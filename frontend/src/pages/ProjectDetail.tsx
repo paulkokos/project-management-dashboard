@@ -6,6 +6,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { useNotification } from '@/contexts/NotificationContext';
 import { TeamMemberManager } from '@/components/TeamMemberManager';
 import { MilestoneManager } from '@/components/MilestoneManager';
+import { CommentSection } from '@/components/CommentSection';
 import {
   canEditProject,
   canManageTeam,
@@ -257,6 +258,11 @@ export default function ProjectDetail() {
           </div>
         </div>
       )}
+
+      <div className="card">
+        <h2 className="text-xl font-bold mb-6">Discussion</h2>
+        <CommentSection projectId={parseInt(id!)} />
+      </div>
     </div>
   );
 }

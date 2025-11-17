@@ -511,3 +511,40 @@ class Task(BaseModel):
         """Mark task as in progress"""
         self.status = "in_progress"
         self.save()
+
+
+class Comment(BaseModel):
+    """Comment model for project discussions"""
+
+    project = models.ForeignKey(
+        Project, on_delete=models.CASCADE, related_name="comments", db_index=True
+    )
+    author = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="comments"
+    )
+    content = models.TextField()
+
+    # Threading support
+    parent_comment = models.ForeignKey(
+        "self",
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name="replies",
+    )
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["project", "-created_at"]),
+            models.Index(fields=["parent_comment"]),
+            models.Index(fields=["author"]),
+        ]
+
+    def __str__(self):
+        return f"Comment by {self.author.username} on {self.project.title}"
+
+    @property
+    def reply_count(self):
+        """Get number of replies to this comment"""
+        return self.replies.count()
