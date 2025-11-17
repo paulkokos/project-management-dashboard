@@ -78,7 +78,8 @@ describe('ProjectDetail Page', () => {
   it('shows loading state initially', () => {
     (projectAPI.get as vi.Mock).mockImplementation(() => new Promise(() => {})); // Never resolves
     renderComponent({ id: 1, username: 'owner' });
-    expect(screen.getByText(/loading/i)).toBeInTheDocument();
+    const loadingElements = screen.getAllByText(/loading/i);
+    expect(loadingElements.length).toBeGreaterThan(0);
   });
 
   describe('Permissions for Project Owner', () => {

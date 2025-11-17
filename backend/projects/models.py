@@ -367,14 +367,8 @@ class Comment(BaseModel):
     """
 
     # Content and author
-    content = models.TextField(
-        help_text="Markdown-formatted comment content"
-    )
-    author = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name="comments"
-    )
+    content = models.TextField(help_text="Markdown-formatted comment content")
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name="comments")
 
     # Polymorphic relationship - can comment on different entities
     # For now supporting projects and tasks (if task model exists)
@@ -384,7 +378,7 @@ class Comment(BaseModel):
         related_name="comments",
         null=True,
         blank=True,
-        help_text="Project this comment belongs to"
+        help_text="Project this comment belongs to",
     )
 
     # Future: Add task foreign key when task model is created
@@ -398,23 +392,20 @@ class Comment(BaseModel):
 
     # Threading support for nested replies
     parent_comment = models.ForeignKey(
-        'self',
+        "self",
         on_delete=models.CASCADE,
-        related_name='replies',
+        related_name="replies",
         null=True,
         blank=True,
-        help_text="Parent comment if this is a reply"
+        help_text="Parent comment if this is a reply",
     )
 
     # Edit tracking
     edited_at = models.DateTimeField(
-        null=True,
-        blank=True,
-        help_text="Timestamp when comment was last edited"
+        null=True, blank=True, help_text="Timestamp when comment was last edited"
     )
     edit_count = models.IntegerField(
-        default=0,
-        help_text="Number of times this comment has been edited"
+        default=0, help_text="Number of times this comment has been edited"
     )
 
     class Meta:
@@ -456,7 +447,9 @@ class Comment(BaseModel):
         Get all replies including nested replies.
         Returns replies in tree-like structure.
         """
-        direct_replies = self.replies.filter(deleted_at__isnull=True).order_by('-created_at')
+        direct_replies = self.replies.filter(deleted_at__isnull=True).order_by(
+            "-created_at"
+        )
         return direct_replies
 
 

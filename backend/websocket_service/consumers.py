@@ -32,7 +32,9 @@ class ProjectUpdateConsumer(AsyncWebsocketConsumer):
         self.user = await self.get_user_from_token()
 
         if not self.user or not self.user.is_authenticated:
-            logger.warning("No authenticated user for project updates, rejecting connection")
+            logger.warning(
+                "No authenticated user for project updates, rejecting connection"
+            )
             await self.close()
             return
 
@@ -125,7 +127,9 @@ class TaskUpdateConsumer(AsyncWebsocketConsumer):
         self.user = await self.get_user_from_token()
 
         if not self.user or not self.user.is_authenticated:
-            logger.warning("No authenticated user for task updates, rejecting connection")
+            logger.warning(
+                "No authenticated user for task updates, rejecting connection"
+            )
             await self.close()
             return
 
@@ -134,7 +138,9 @@ class TaskUpdateConsumer(AsyncWebsocketConsumer):
         # Verify user has access to project
         has_access = await self.verify_project_access()
         if not has_access:
-            logger.warning(f"User {self.user_id} denied access to project {self.project_id}")
+            logger.warning(
+                f"User {self.user_id} denied access to project {self.project_id}"
+            )
             await self.close()
             return
 

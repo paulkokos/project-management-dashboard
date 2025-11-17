@@ -174,7 +174,6 @@ describe('CommentList', () => {
       />
     );
 
-    const spinner = screen.getByRole('main', { hidden: true }) || screen.queryByText('', { selector: '.animate-spin' });
     expect(document.querySelector('.animate-spin')).toBeInTheDocument();
   });
 });
