@@ -170,6 +170,16 @@ class ProjectViewSet(viewsets.ModelViewSet):
             self.permission_classes = [IsAuthenticated]
         return super().get_permissions()
 
+    def get_object(self):
+        """Override get_object to bypass queryset filter and use permission classes"""
+        # Get the project directly from DB without queryset filtering
+        # This allows permission classes to control access
+        pk = self.kwargs.get('pk')
+        project = Project.objects.get(pk=pk)
+        # Check permissions will be called automatically by DRF
+        self.check_object_permissions(self.request, project)
+        return project
+
     def perform_create(self, serializer):
         """Create project and log activity"""
         project = serializer.save(owner=self.request.user)
@@ -1104,6 +1114,24 @@ class CommentViewSet(viewsets.ModelViewSet):
             raise PermissionDenied("You do not have access to this project's comments")
 
         return comment
+
+    def update(self, request, *args, **kwargs):
+        """Update comment and increment edit_count"""
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+
+        # Check permission
+        if instance.author != request.user and not request.user.is_superuser:
+            raise PermissionDenied("You can only update your own comments")
+
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+
+        # Increment edit_count before saving
+        instance.edit_count = (instance.edit_count or 0) + 1
+        serializer.save()
+
+        return Response(serializer.data)
 
     def perform_update(self, serializer):
         """Update comment with permission check"""

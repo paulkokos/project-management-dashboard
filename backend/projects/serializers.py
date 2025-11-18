@@ -732,6 +732,14 @@ class CommentSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["created_at", "updated_at"]
 
+    def validate_content(self, value):
+        """Validate content length does not exceed 5000 characters"""
+        if len(value) > 5000:
+            raise serializers.ValidationError(
+                "Comment content cannot exceed 5000 characters."
+            )
+        return value
+
     def get_replies(self, obj):
         """Get nested replies for this comment"""
         if obj.parent_comment_id is not None:
