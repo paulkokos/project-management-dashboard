@@ -9,7 +9,7 @@ django-ratelimit==4.1.0
 
 # Database
 psycopg2-binary==2.9.11
-django-dbbackup==5.0.0
+django-dbbackup==5.0.1
 
 # Real-time & WebSocket
 channels==4.3.1
