@@ -452,11 +452,10 @@ class ProjectCreateUpdateSerializer(serializers.ModelSerializer):
     """
 
     owner = UserSimpleSerializer(read_only=True)
-    tag_ids = serializers.PrimaryKeyRelatedField(
+    title = serializers.CharField(required=True, max_length=255)
+    tags = serializers.PrimaryKeyRelatedField(
         queryset=Tag.objects.all(),
-        write_only=True,
         many=True,
-        source="tags",
         required=False,
     )
     start_date = serializers.DateField(required=False, allow_null=True)
@@ -476,7 +475,7 @@ class ProjectCreateUpdateSerializer(serializers.ModelSerializer):
             "owner",
             "start_date",
             "end_date",
-            "tag_ids",
+            "tags",
             "etag",
             "version",
         ]
@@ -716,6 +715,7 @@ class CommentSerializer(serializers.ModelSerializer):
 
     author = UserSimpleSerializer(read_only=True)
     reply_count = serializers.IntegerField(read_only=True)
+    replies = serializers.SerializerMethodField()
 
     class Meta:
         model = Comment
@@ -726,10 +726,19 @@ class CommentSerializer(serializers.ModelSerializer):
             "author",
             "parent_comment",
             "reply_count",
+            "replies",
             "created_at",
             "updated_at",
         ]
         read_only_fields = ["created_at", "updated_at"]
+
+    def get_replies(self, obj):
+        """Get nested replies for this comment"""
+        if obj.parent_comment_id is not None:
+            # This is a reply itself, return empty list
+            return []
+        replies = obj.replies.filter(deleted_at__isnull=True).order_by("created_at")
+        return CommentSerializer(replies, many=True).data
 
 
 class CommentListSerializer(serializers.ModelSerializer):
