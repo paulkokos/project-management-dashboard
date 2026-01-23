@@ -41,6 +41,69 @@ export interface Milestone {
   progress: number;
 }
 
+export interface Task {
+  id: number;
+  title: string;
+  description: string;
+  status: 'backlog' | 'todo' | 'in_progress' | 'in_review' | 'done' | 'cancelled';
+  priority: 'low' | 'medium' | 'high' | 'critical';
+  assigned_to: User | null;
+  progress: number;
+  estimated_hours: number | null;
+  actual_hours: number | null;
+  due_date: string | null;
+  start_date: string | null;
+  completed_at: string | null;
+  parent_task: number | null;
+  milestone: number | null;
+  project_id: number;
+  project_title: string;
+  milestone_title: string | null;
+  tags: Tag[];
+  subtask_count: number;
+  completed_subtask_count: number;
+  is_overdue: boolean;
+  days_until_due: number | null;
+  created_at: string;
+  updated_at: string;
+  etag: string;
+  version: number;
+}
+
+export interface TaskDetail extends Task {
+  subtasks: Task[];
+}
+
+export interface CreateTaskRequest {
+  project: number;
+  title: string;
+  description?: string;
+  status?: Task['status'];
+  priority?: Task['priority'];
+  assigned_to_id?: number | null;
+  progress?: number;
+  estimated_hours?: number | null;
+  actual_hours?: number | null;
+  due_date?: string | null;
+  start_date?: string | null;
+  parent_task?: number | null;
+  milestone?: number | null;
+  tags?: number[];
+}
+
+export type UpdateTaskRequest = Partial<CreateTaskRequest>;
+
+export interface TaskFilters {
+  project_id?: number;
+  status?: Task['status'] | Task['status'][];
+  priority?: Task['priority'] | Task['priority'][];
+  assigned_to?: number;
+  milestone?: number;
+  search?: string;
+  is_overdue?: boolean;
+  parent_task__isnull?: boolean;
+}
+
 export interface Activity {
   id: number;
   activity_type: string;

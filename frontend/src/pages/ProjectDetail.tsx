@@ -6,6 +6,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { useNotification } from '@/contexts/NotificationContext';
 import { TeamMemberManager } from '@/components/TeamMemberManager';
 import { MilestoneManager } from '@/components/MilestoneManager';
+import { TaskSection } from '@/components/TaskSection';
 import { CommentSection } from '@/components/CommentSection';
 import {
   canEditProject,
@@ -240,6 +241,21 @@ export default function ProjectDetail() {
           projectId={parseInt(id!)}
           canEdit={canEdit}
           initialMilestones={p.milestones || []}
+        />
+      </div>
+
+      <div className="card">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-bold">Tasks</h2>
+          {!canEdit && (
+            <span className="text-xs bg-amber-50 text-amber-700 px-3 py-1 rounded">Read Only</span>
+          )}
+        </div>
+        <TaskSection
+          projectId={parseInt(id!)}
+          canEdit={canEdit}
+          teamMembers={p.team_members_details?.map((member: any) => member.user) || []}
+          milestones={p.milestones || []}
         />
       </div>
 
