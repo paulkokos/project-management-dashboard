@@ -18,6 +18,7 @@ from websocket_service.channels_broadcast import (
     broadcast_comment_change,
     broadcast_milestone_change,
     broadcast_project_update,
+    broadcast_task_change,
     broadcast_team_member_change,
     notify_project_team,
 )
@@ -959,6 +960,18 @@ class TaskViewSet(viewsets.ModelViewSet):
             metadata={"task_id": task.id, "task_title": task.title},
         )
 
+        # Broadcast real-time update
+        broadcast_task_change(
+            project_id=task.project_id,
+            event_type="task_created",
+            task_data={
+                "id": task.id,
+                "title": task.title,
+                "status": task.status,
+                "priority": task.priority,
+            },
+        )
+
     def perform_update(self, serializer):
         """Update task and log activity."""
         old_instance = Task.objects.get(pk=serializer.instance.pk)
@@ -985,6 +998,19 @@ class TaskViewSet(viewsets.ModelViewSet):
                 metadata={"task_id": task.id, "task_title": task.title},
             )
 
+        # Broadcast real-time update
+        broadcast_task_change(
+            project_id=task.project_id,
+            event_type="task_updated",
+            task_data={
+                "id": task.id,
+                "title": task.title,
+                "status": task.status,
+                "priority": task.priority,
+                "progress": task.progress,
+            },
+        )
+
     def perform_destroy(self, instance):
         """Soft delete task and log activity."""
         instance.soft_delete()
@@ -995,6 +1021,13 @@ class TaskViewSet(viewsets.ModelViewSet):
             user=self.request.user,
             description=f"Task '{instance.title}' was deleted",
             metadata={"task_id": instance.id, "task_title": instance.title},
+        )
+
+        # Broadcast real-time update
+        broadcast_task_change(
+            project_id=instance.project_id,
+            event_type="task_deleted",
+            task_data={"id": instance.id},
         )
 
     @action(detail=True, methods=["post"])
@@ -1009,6 +1042,17 @@ class TaskViewSet(viewsets.ModelViewSet):
             user=request.user,
             description=f"Task '{task.title}' was marked as complete",
             metadata={"task_id": task.id},
+        )
+
+        # Broadcast real-time update
+        broadcast_task_change(
+            project_id=task.project_id,
+            event_type="task_status_changed",
+            task_data={
+                "id": task.id,
+                "status": "done",
+                "progress": 100,
+            },
         )
 
         serializer = self.get_serializer(task)
@@ -1026,6 +1070,16 @@ class TaskViewSet(viewsets.ModelViewSet):
             user=request.user,
             description=f"Task '{task.title}' is now in progress",
             metadata={"task_id": task.id, "new_status": "in_progress"},
+        )
+
+        # Broadcast real-time update
+        broadcast_task_change(
+            project_id=task.project_id,
+            event_type="task_status_changed",
+            task_data={
+                "id": task.id,
+                "status": "in_progress",
+            },
         )
 
         serializer = self.get_serializer(task)

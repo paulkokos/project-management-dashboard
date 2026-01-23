@@ -4,6 +4,7 @@ export { roleAPI } from './role.api';
 export { userAPI } from './user.api';
 export { milestoneAPI } from './milestone.api';
 export { commentAPI } from './comment.api';
+export { taskAPI } from './task.api';
 export { bulkAPI } from './bulk.api';
 export { authAPI } from './auth.api';
 export { healthAPI } from './health.api';
