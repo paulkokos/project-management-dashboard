@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { NotificationProvider } from '@/contexts/NotificationContext';
 import '@testing-library/jest-dom';
 import TaskSection from '@/components/TaskSection';
 import * as useTasks from '@/hooks/useTasks';
@@ -59,9 +60,11 @@ describe('TaskSection', () => {
 
   const renderWithProviders = (component: React.ReactElement) => {
     return render(
-      <QueryClientProvider client={queryClient}>
-        {component}
-      </QueryClientProvider>
+      <NotificationProvider>
+        <QueryClientProvider client={queryClient}>
+          {component}
+        </QueryClientProvider>
+      </NotificationProvider>
     );
   };
 
