@@ -32,7 +32,7 @@ setup(
     ],
     python_requires=">=3.11",
     install_requires=[
-        "Django>=4.2.7,<5.0",
+        "Django>=4.2.7,<6.0",
         "djangorestframework>=3.14.0",
         "django-cors-headers>=4.3.1",
         "django-filter>=23.4",
