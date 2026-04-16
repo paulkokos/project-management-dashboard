@@ -54,20 +54,6 @@ class Migration(migrations.Migration):
                 "ordering": ["-created_at"],
             },
         ),
-        migrations.RemoveIndex(
-            model_name="activity",
-            name="projects_ac_user_id_2d211a_idx",
-        ),
-        migrations.RemoveIndex(
-            model_name="activity",
-            name="projects_ac_activit_54d3e1_idx",
-        ),
-        migrations.AddIndex(
-            model_name="activity",
-            index=models.Index(
-                fields=["user", "activity_type"], name="projects_ac_user_id_5cdc85_idx"
-            ),
-        ),
         migrations.AddField(
             model_name="comment",
             name="author",

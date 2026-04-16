@@ -11,6 +11,8 @@ from .views import (
     CommentViewSet,
     MilestoneViewSet,
     ProjectViewSet,
+    ReportConfigurationViewSet,
+    ReportViewSet,
     RoleViewSet,
     TagViewSet,
     TaskViewSet,
@@ -27,6 +29,8 @@ router.register(r"roles", RoleViewSet, basename="role")
 router.register(r"users", UserViewSet, basename="user")
 router.register(r"bulk", BulkOperationViewSet, basename="bulk-operation")
 router.register(r"search", ProjectSearchViewSet, basename="search")
+router.register(r"report-configurations", ReportConfigurationViewSet, basename="report-configuration")
+router.register(r"reports", ReportViewSet, basename="report")
 
 urlpatterns = [
     path("", include(router.urls)),

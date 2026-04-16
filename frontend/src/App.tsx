@@ -13,6 +13,9 @@ import Login from '@/pages/Login';
 import Signup from '@/pages/Signup';
 import Settings from '@/pages/Settings';
 import Search from '@/pages/Search';
+import Reports from '@/pages/Reports';
+import ReportDetail from '@/pages/ReportDetail';
+import ReportCreate from '@/pages/ReportCreate';
 import { useAuthStore } from '@/stores/authStore';
 import { useWebSocket } from '@/hooks';
 import { NotificationProvider } from '@/contexts/NotificationContext';
@@ -54,6 +57,9 @@ function AppContent() {
         <Route path="/projects/:id" element={<ProjectDetail />} />
         <Route path="/projects/:id/edit" element={<ProjectEdit />} />
         <Route path="/projects/:id/changelog" element={<ProjectChangeLog />} />
+        <Route path="/reports" element={<Reports />} />
+        <Route path="/reports/new" element={<ReportCreate />} />
+        <Route path="/reports/:id" element={<ReportDetail />} />
         <Route path="/search" element={<Search />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/login" element={<Navigate to="/" replace />} />

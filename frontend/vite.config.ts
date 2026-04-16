@@ -11,20 +11,14 @@ export default defineConfig({
   },
   server: {
     host: '0.0.0.0',
-    port: 3000,
+    port: 3055,
     proxy: {
       '/api': {
-        target: 'http://backend:8000',
+        target: 'http://localhost:3065',
         changeOrigin: true,
-        onProxyReq(proxyReq) {
-          console.log('--> [proxy]', proxyReq.method, proxyReq.path);
-        },
-        onProxyRes(proxyRes, req, res) {
-          console.log('<-- [proxy]', req.method, req.url, proxyRes.statusCode);
-        },
       },
       '/ws': {
-        target: 'ws://backend:8000',
+        target: 'ws://localhost:3065',
         ws: true,
       },
     },

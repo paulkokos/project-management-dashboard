@@ -27,6 +27,8 @@ from .models import (
     Milestone,
     Project,
     ProjectBulkOperation,
+    Report,
+    ReportConfiguration,
     Role,
     Tag,
     Task,
@@ -49,6 +51,10 @@ from .serializers import (
     ProjectCreateUpdateSerializer,
     ProjectDetailSerializer,
     ProjectListSerializer,
+    ReportConfigurationListSerializer,
+    ReportConfigurationSerializer,
+    ReportListSerializer,
+    ReportSerializer,
     RoleSerializer,
     TagSerializer,
     TaskCreateUpdateSerializer,
@@ -1068,3 +1074,463 @@ class CommentViewSet(viewsets.ModelViewSet):
         if instance.author != self.request.user and not self.request.user.is_superuser:
             raise PermissionDenied("You can only delete your own comments")
         instance.soft_delete()
+
+
+class ReportConfigurationViewSet(viewsets.ModelViewSet):
+    """Provides CRUD operations for Report Configuration."""
+
+    serializer_class = ReportConfigurationSerializer
+    permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, OrderingFilter]
+    filterset_fields = ["report_type"]
+    ordering_fields = ["name", "created_at", "updated_at"]
+    ordering = ["-updated_at"]
+
+    def get_serializer_class(self):
+        """Return appropriate serializer based on action"""
+        if self.action == "list":
+            from .serializers import ReportConfigurationListSerializer
+            return ReportConfigurationListSerializer
+        return ReportConfigurationSerializer
+
+    def get_queryset(self):
+        """Get report configurations for the current user"""
+        return ReportConfiguration.objects.filter(
+            user=self.request.user
+        ).prefetch_related("projects")
+
+    def perform_create(self, serializer):
+        """Create report configuration with current user"""
+        serializer.save(user=self.request.user)
+
+    @action(detail=True, methods=["post"])
+    def apply(self, request, pk=None):
+        """Apply this configuration to generate a report preview"""
+        config = self.get_object()
+        return Response({
+            "success": True,
+            "config": ReportConfigurationSerializer(config).data
+        })
+
+
+class ReportViewSet(viewsets.ModelViewSet):
+    """Provides CRUD operations for Reports and report generation."""
+
+    serializer_class = ReportSerializer
+    permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ["report_type", "status"]
+    search_fields = ["title", "description"]
+    ordering_fields = ["title", "created_at", "generated_at"]
+    ordering = ["-created_at"]
+
+    def get_serializer_class(self):
+        """Return appropriate serializer based on action"""
+        if self.action == "list":
+            from .serializers import ReportListSerializer
+            return ReportListSerializer
+        return ReportSerializer
+
+    def get_queryset(self):
+        """Get reports for the current user"""
+        return Report.objects.filter(
+            user=self.request.user
+        ).select_related("configuration", "user")
+
+    def perform_create(self, serializer):
+        """Create report with current user"""
+        serializer.save(user=self.request.user, status="draft")
+
+    @action(detail=False, methods=["post"])
+    def generate_project_progress(self, request):
+        """Generate a project progress report based on parameters"""
+        import time
+        from datetime import date, timedelta
+        from django.utils.dateparse import parse_date
+        from django.db.models import Count, Avg, Q
+
+        start_time = time.time()
+        
+        # Get parameters
+        start_date_str = request.data.get("start_date")
+        end_date_str = request.data.get("end_date")
+        relative_range = request.data.get("relative_time_range")
+        project_ids = request.data.get("project_ids", [])
+        status_filter = request.data.get("status_filter")
+        health_filter = request.data.get("health_filter")
+        
+        # Calculate date range
+        today = date.today()
+        if relative_range:
+            if relative_range == "last_7_days":
+                end = today
+                start = end - timedelta(days=7)
+            elif relative_range == "last_30_days":
+                end = today
+                start = end - timedelta(days=30)
+            elif relative_range == "last_90_days":
+                end = today
+                start = end - timedelta(days=90)
+            elif relative_range == "this_month":
+                start = today.replace(day=1)
+                end = today
+            elif relative_range == "this_quarter":
+                quarter = (today.month - 1) // 3 + 1
+                start = date(today.year, 3 * quarter - 2, 1)
+                end = today
+            elif relative_range == "this_year":
+                start = date(today.year, 1, 1)
+                end = today
+            else:
+                start = None
+                end = None
+        else:
+            start = parse_date(start_date_str) if start_date_str else None
+            end = parse_date(end_date_str) if end_date_str else None
+        
+        # Build project queryset
+        projects = Project.objects.filter(
+            Q(owner=request.user) | Q(team_members_details__user=request.user)
+        ).distinct()
+        
+        if project_ids:
+            projects = projects.filter(id__in=project_ids)
+        
+        if status_filter:
+            projects = projects.filter(status=status_filter)
+        
+        if health_filter:
+            projects = projects.filter(health=health_filter)
+        
+        # Calculate progress statistics
+        total_projects = projects.count()
+        
+        if total_projects == 0:
+            return Response({
+                "success": True,
+                "report_type": "project_progress",
+                "total_projects": 0,
+                "start_date": start,
+                "end_date": end,
+                "summary": {},
+                "by_status": [],
+                "by_health": [],
+                "progress_distribution": [],
+                "projects": [],
+            })
+        
+        # Summary statistics
+        avg_progress = projects.aggregate(Avg("progress"))["progress__avg"] or 0
+        completed_projects = projects.filter(status="completed").count()
+        active_projects = projects.filter(status="active").count()
+        on_hold_projects = projects.filter(status="on_hold").count()
+        archived_projects = projects.filter(status="archived").count()
+        
+        # Status distribution
+        status_distribution = projects.values("status").annotate(
+            count=Count("id")
+        ).order_by("-count")
+        
+        # Health distribution
+        health_distribution = projects.values("health").annotate(
+            count=Count("id")
+        ).order_by("-count")
+        
+        # Progress distribution (grouped by 10% increments)
+        progress_groups = []
+        for i in range(0, 100, 10):
+            low = i
+            high = i + 9
+            if high == 99:
+                high = 100
+            count = projects.filter(progress__gte=low, progress__lte=high).count()
+            if count > 0:
+                progress_groups.append({
+                    "range": f"{low}-{high}%",
+                    "count": count,
+                    "low": low,
+                    "high": high
+                })
+        
+        # Project list with details
+        project_list = []
+        for project in projects:
+            project_list.append({
+                "id": project.id,
+                "title": project.title,
+                "status": project.status,
+                "health": project.health,
+                "progress": project.progress,
+                "start_date": project.start_date,
+                "end_date": project.end_date,
+                "days_until_deadline": project.days_until_deadline,
+                "risk_level": project.risk_level,
+                "milestone_count": project.milestone_count,
+                "completed_milestone_count": project.completed_milestone_count,
+                "team_count": project.team_count,
+            })
+        
+        # Calculate generation time
+        generation_time = time.time() - start_time
+        
+        report_data = {
+            "success": True,
+            "report_type": "project_progress",
+            "total_projects": total_projects,
+            "start_date": str(start) if start else None,
+            "end_date": str(end) if end else None,
+            "summary": {
+                "average_progress": round(avg_progress, 1),
+                "completed_count": completed_projects,
+                "active_count": active_projects,
+                "on_hold_count": on_hold_projects,
+                "archived_count": archived_projects,
+            },
+            "by_status": list(status_distribution),
+            "by_health": list(health_distribution),
+            "progress_distribution": progress_groups,
+            "projects": project_list,
+            "generation_time_seconds": round(generation_time, 3),
+            "generated_at": str(today),
+        }
+        
+        # If save_report is true, save to database
+        save_report = request.data.get("save_report", False)
+        if save_report:
+            title = request.data.get("title", f"Project Progress Report - {today}")
+            description = request.data.get("description", "")
+            report = Report.objects.create(
+                user=request.user,
+                title=title,
+                description=description,
+                report_type="project_progress",
+                start_date=start,
+                end_date=end,
+                export_format="json",
+                report_data=report_data,
+            )
+            report.mark_as_completed(report_data, generation_time)
+            return Response(ReportSerializer(report).data)
+        
+        return Response(report_data)
+
+    @action(detail=False, methods=["post"])
+    def generate_task_completion(self, request):
+        """Generate a task completion report based on parameters"""
+        import time
+        from datetime import date, timedelta
+        from django.utils.dateparse import parse_date
+        from django.db.models import Count, Avg, Q
+
+        start_time = time.time()
+        
+        # Get parameters
+        start_date_str = request.data.get("start_date")
+        end_date_str = request.data.get("end_date")
+        relative_range = request.data.get("relative_time_range")
+        project_ids = request.data.get("project_ids", [])
+        
+        # Calculate date range
+        today = date.today()
+        if relative_range:
+            if relative_range == "last_7_days":
+                end = today
+                start = end - timedelta(days=7)
+            elif relative_range == "last_30_days":
+                end = today
+                start = end - timedelta(days=30)
+            elif relative_range == "last_90_days":
+                end = today
+                start = end - timedelta(days=90)
+            elif relative_range == "this_month":
+                start = today.replace(day=1)
+                end = today
+            elif relative_range == "this_quarter":
+                quarter = (today.month - 1) // 3 + 1
+                start = date(today.year, 3 * quarter - 2, 1)
+                end = today
+            elif relative_range == "this_year":
+                start = date(today.year, 1, 1)
+                end = today
+            else:
+                start = None
+                end = None
+        else:
+            start = parse_date(start_date_str) if start_date_str else None
+            end = parse_date(end_date_str) if end_date_str else None
+        
+        # Get accessible projects for user
+        user_projects = Project.objects.filter(
+            Q(owner=request.user) | Q(team_members_details__user=request.user)
+        ).distinct()
+        
+        if project_ids:
+            user_projects = user_projects.filter(id__in=project_ids)
+        
+        user_project_ids = list(user_projects.values_list("id", flat=True))
+        
+        # Build task queryset
+        tasks = Task.objects.filter(project_id__in=user_project_ids)
+        
+        # Filter by date range if provided
+        if start and end:
+            tasks = tasks.filter(
+                Q(created_at__date__gte=start) & Q(created_at__date__lte=end)
+            )
+        
+        total_tasks = tasks.count()
+        
+        if total_tasks == 0:
+            return Response({
+                "success": True,
+                "report_type": "task_completion",
+                "total_tasks": 0,
+                "start_date": start,
+                "end_date": end,
+                "summary": {},
+                "by_status": [],
+                "by_priority": [],
+                "by_project": [],
+                "completion_trend": [],
+                "tasks": [],
+            })
+        
+        # Summary statistics
+        completed_tasks = tasks.filter(status="done").count()
+        in_progress_tasks = tasks.filter(status="in_progress").count()
+        todo_tasks = tasks.filter(status="todo").count()
+        review_tasks = tasks.filter(status="in_review").count()
+        backlog_tasks = tasks.filter(status="backlog").count()
+        cancelled_tasks = tasks.filter(status="cancelled").count()
+        
+        # Calculate completion rate
+        completion_rate = (completed_tasks / total_tasks * 100) if total_tasks > 0 else 0
+        
+        # Status distribution
+        status_distribution = tasks.values("status").annotate(
+            count=Count("id")
+        ).order_by("-count")
+        
+        # Priority distribution
+        priority_distribution = tasks.values("priority").annotate(
+            count=Count("id")
+        ).order_by("-count")
+        
+        # Tasks by project
+        tasks_by_project = tasks.values("project_id", "project__title").annotate(
+            total=Count("id"),
+            completed=Count("id", filter=Q(status="done"))
+        ).order_by("-total")
+        
+        # Task list with details
+        task_list = []
+        for task in tasks.select_related("project", "assigned_to", "milestone"):
+            task_list.append({
+                "id": task.id,
+                "title": task.title,
+                "status": task.status,
+                "priority": task.priority,
+                "progress": task.progress,
+                "project_id": task.project_id,
+                "project_title": task.project.title if task.project else None,
+                "assigned_to": {
+                    "id": task.assigned_to.id,
+                    "username": task.assigned_to.username,
+                } if task.assigned_to else None,
+                "due_date": task.due_date,
+                "start_date": task.start_date,
+                "completed_at": task.completed_at,
+                "is_overdue": task.is_overdue,
+                "days_until_due": task.days_until_due,
+                "estimated_hours": task.estimated_hours,
+                "actual_hours": float(task.actual_hours) if task.actual_hours else None,
+            })
+        
+        # Calculate generation time
+        generation_time = time.time() - start_time
+        
+        report_data = {
+            "success": True,
+            "report_type": "task_completion",
+            "total_tasks": total_tasks,
+            "start_date": str(start) if start else None,
+            "end_date": str(end) if end else None,
+            "summary": {
+                "completion_rate": round(completion_rate, 1),
+                "completed_count": completed_tasks,
+                "in_progress_count": in_progress_tasks,
+                "todo_count": todo_tasks,
+                "review_count": review_tasks,
+                "backlog_count": backlog_tasks,
+                "cancelled_count": cancelled_tasks,
+            },
+            "by_status": list(status_distribution),
+            "by_priority": list(priority_distribution),
+            "by_project": list(tasks_by_project),
+            "tasks": task_list,
+            "generation_time_seconds": round(generation_time, 3),
+            "generated_at": str(today),
+        }
+        
+        # If save_report is true, save to database
+        save_report = request.data.get("save_report", False)
+        if save_report:
+            title = request.data.get("title", f"Task Completion Report - {today}")
+            description = request.data.get("description", "")
+            report = Report.objects.create(
+                user=request.user,
+                title=title,
+                description=description,
+                report_type="task_completion",
+                start_date=start,
+                end_date=end,
+                export_format="json",
+                report_data=report_data,
+            )
+            report.mark_as_completed(report_data, generation_time)
+            return Response(ReportSerializer(report).data)
+        
+        return Response(report_data)
+
+    @action(detail=True, methods=["post"])
+    def export_pdf(self, request, pk=None):
+        """Export report as PDF"""
+        report = self.get_object()
+        
+        # For now, we'll create a placeholder PDF generation
+        # In a real implementation, you would use libraries like:
+        # - reportlab
+        # - xhtml2pdf
+        # - weasyprint
+        
+        # For now, we'll just update the status and return a placeholder
+        # This is a stub that can be extended later
+        
+        return Response({
+            "success": True,
+            "message": "PDF export is a placeholder. To implement full PDF export, install reportlab/weasyprint and add PDF generation logic.",
+            "report_id": report.id,
+            "report_title": report.title,
+        })
+
+    @action(detail=True, methods=["get"])
+    def download(self, request, pk=None):
+        """Download the exported report file"""
+        from django.http import FileResponse, HttpResponse
+        import os
+        
+        report = self.get_object()
+        
+        if report.exported_file and os.path.exists(report.exported_file.path):
+            response = FileResponse(open(report.exported_file.path, "rb"))
+            response["Content-Disposition"] = f'attachment; filename="{report.title}.{report.export_format}"'
+            return response
+        
+        # If no file exists, return JSON data as download
+        import json
+        response = HttpResponse(
+            json.dumps(report.report_data, indent=2),
+            content_type="application/json"
+        )
+        response["Content-Disposition"] = f'attachment; filename="{report.title}.json"'
+        return response
