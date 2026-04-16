@@ -11,6 +11,8 @@ from .models import (
     Milestone,
     Project,
     ProjectBulkOperation,
+    Report,
+    ReportConfiguration,
     Role,
     Tag,
     Task,
@@ -744,3 +746,154 @@ class CommentListSerializer(serializers.ModelSerializer):
         """Get nested replies for this comment"""
         replies = obj.replies.filter(deleted_at__isnull=True).order_by("created_at")
         return CommentSerializer(replies, many=True).data
+
+
+class ReportConfigurationSerializer(serializers.ModelSerializer):
+    """Serializer for ReportConfiguration model"""
+
+    user = UserSimpleSerializer(read_only=True)
+    project_ids = serializers.ListField(
+        child=serializers.IntegerField(),
+        write_only=True,
+        required=False
+    )
+
+    class Meta:
+        model = ReportConfiguration
+        fields = [
+            "id",
+            "user",
+            "name",
+            "report_type",
+            "start_date",
+            "end_date",
+            "relative_time_range",
+            "projects",
+            "project_ids",
+            "status_filter",
+            "health_filter",
+            "include_charts",
+            "chart_types",
+            "config_data",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "user", "created_at", "updated_at"]
+
+    def create(self, validated_data):
+        """Create report configuration with project IDs"""
+        project_ids = validated_data.pop("project_ids", [])
+        config = ReportConfiguration.objects.create(**validated_data)
+        if project_ids:
+            config.projects.set(project_ids)
+        return config
+
+    def update(self, instance, validated_data):
+        """Update report configuration with project IDs"""
+        project_ids = validated_data.pop("project_ids", None)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        if project_ids is not None:
+            instance.projects.set(project_ids)
+        return instance
+
+
+class ReportConfigurationListSerializer(serializers.ModelSerializer):
+    """Lightweight serializer for listing report configurations"""
+
+    project_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ReportConfiguration
+        fields = [
+            "id",
+            "name",
+            "report_type",
+            "start_date",
+            "end_date",
+            "relative_time_range",
+            "include_charts",
+            "project_count",
+            "created_at",
+            "updated_at",
+        ]
+
+    def get_project_count(self, obj):
+        """Get number of projects in this configuration"""
+        return obj.projects.count()
+
+
+class ReportSerializer(serializers.ModelSerializer):
+    """Serializer for Report model"""
+
+    user = UserSimpleSerializer(read_only=True)
+    configuration_name = serializers.CharField(
+        source="configuration.name", 
+        read_only=True, 
+        allow_null=True
+    )
+    configuration_id = serializers.IntegerField(
+        source="configuration.id", 
+        read_only=True, 
+        allow_null=True
+    )
+
+    class Meta:
+        model = Report
+        fields = [
+            "id",
+            "user",
+            "configuration",
+            "configuration_name",
+            "configuration_id",
+            "title",
+            "description",
+            "report_type",
+            "status",
+            "start_date",
+            "end_date",
+            "report_data",
+            "export_format",
+            "exported_file",
+            "generated_at",
+            "generation_time_seconds",
+            "error_message",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = [
+            "id", 
+            "user", 
+            "status", 
+            "generated_at", 
+            "generation_time_seconds", 
+            "error_message",
+            "created_at",
+            "updated_at",
+        ]
+
+
+class ReportListSerializer(serializers.ModelSerializer):
+    """Lightweight serializer for listing reports"""
+
+    configuration_name = serializers.CharField(
+        source="configuration.name", 
+        read_only=True, 
+        allow_null=True
+    )
+
+    class Meta:
+        model = Report
+        fields = [
+            "id",
+            "title",
+            "report_type",
+            "status",
+            "configuration_name",
+            "start_date",
+            "end_date",
+            "export_format",
+            "generated_at",
+            "created_at",
+        ]
