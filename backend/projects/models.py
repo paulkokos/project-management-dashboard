@@ -620,38 +620,152 @@ class Task(BaseModel):
         self.save()
 
 
-class Comment(BaseModel):
-    """Comment model for project discussions"""
+class ReportConfiguration(BaseModel):
+    """Report configuration for saving user preferences"""
 
-    project = models.ForeignKey(
-        Project, on_delete=models.CASCADE, related_name="comments", db_index=True
-    )
-    author = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="comments"
-    )
-    content = models.TextField()
+    REPORT_TYPE_CHOICES = [
+        ("project_progress", "Project Progress Report"),
+        ("task_completion", "Task Completion Report"),
+    ]
 
-    # Threading support
-    parent_comment = models.ForeignKey(
-        "self",
-        null=True,
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="report_configurations"
+    )
+    name = models.CharField(max_length=255, help_text="Name of the saved report configuration")
+    report_type = models.CharField(
+        max_length=30, choices=REPORT_TYPE_CHOICES, default="project_progress"
+    )
+    
+    # Time range configuration
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
+    relative_time_range = models.CharField(
+        max_length=30, 
+        null=True, 
         blank=True,
-        on_delete=models.CASCADE,
-        related_name="replies",
+        help_text="Predefined time range like 'last_7_days', 'last_30_days', 'this_month', etc."
     )
+    
+    # Filters
+    projects = models.ManyToManyField(Project, related_name="report_configurations", blank=True)
+    status_filter = models.CharField(max_length=20, null=True, blank=True)
+    health_filter = models.CharField(max_length=20, null=True, blank=True)
+    
+    # Chart configuration
+    include_charts = models.BooleanField(default=True)
+    chart_types = models.JSONField(
+        default=list, 
+        blank=True,
+        help_text="List of chart types to include: ['bar', 'line', 'pie', 'area']"
+    )
+    
+    # Layout configuration
+    config_data = models.JSONField(
+        default=dict, 
+        blank=True,
+        help_text="Additional configuration data stored as JSON"
+    )
+
+    class Meta:
+        ordering = ["-updated_at"]
+        indexes = [
+            models.Index(fields=["user", "report_type"]),
+        ]
+
+    def __str__(self):
+        return f"{self.name} - {self.get_report_type_display()} (by {self.user.username})"
+
+
+class Report(BaseModel):
+    """Generated report instance"""
+
+    STATUS_CHOICES = [
+        ("draft", "Draft"),
+        ("generating", "Generating"),
+        ("completed", "Completed"),
+        ("failed", "Failed"),
+    ]
+
+    EXPORT_FORMAT_CHOICES = [
+        ("json", "JSON"),
+        ("pdf", "PDF"),
+        ("csv", "CSV"),
+    ]
+
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="reports"
+    )
+    configuration = models.ForeignKey(
+        ReportConfiguration, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name="reports"
+    )
+    
+    title = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    report_type = models.CharField(
+        max_length=30, choices=ReportConfiguration.REPORT_TYPE_CHOICES
+    )
+    status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default="draft"
+    )
+    
+    # Time range used for this report
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
+    
+    # Report data
+    report_data = models.JSONField(
+        default=dict,
+        help_text="The actual report data stored as JSON"
+    )
+    
+    # Export information
+    export_format = models.CharField(
+        max_length=10, 
+        choices=EXPORT_FORMAT_CHOICES, 
+        default="json"
+    )
+    exported_file = models.FileField(
+        upload_to="reports/", 
+        null=True, 
+        blank=True,
+        help_text="Path to exported PDF/CSV file"
+    )
+    
+    # Metadata
+    generated_at = models.DateTimeField(null=True, blank=True)
+    generation_time_seconds = models.FloatField(
+        null=True, 
+        blank=True,
+        help_text="Time taken to generate the report in seconds"
+    )
+    error_message = models.TextField(blank=True, help_text="Error message if generation failed")
 
     class Meta:
         ordering = ["-created_at"]
         indexes = [
-            models.Index(fields=["project", "-created_at"]),
-            models.Index(fields=["parent_comment"]),
-            models.Index(fields=["author"]),
+            models.Index(fields=["user", "status"]),
+            models.Index(fields=["report_type", "created_at"]),
         ]
 
     def __str__(self):
-        return f"Comment by {self.author.username} on {self.project.title}"
+        return f"{self.title} ({self.get_status_display()}) - {self.user.username}"
 
-    @property
-    def reply_count(self):
-        """Get number of replies to this comment"""
-        return self.replies.count()
+    def mark_as_completed(self, report_data=None, generation_time=None):
+        """Mark report as completed"""
+        self.status = "completed"
+        self.generated_at = timezone.now()
+        if report_data:
+            self.report_data = report_data
+        if generation_time:
+            self.generation_time_seconds = generation_time
+        self.save()
+
+    def mark_as_failed(self, error_message):
+        """Mark report as failed"""
+        self.status = "failed"
+        self.error_message = error_message
+        self.save()

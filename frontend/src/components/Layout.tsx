@@ -38,6 +38,13 @@ export default function Layout({ children }: LayoutProps) {
               </Link>
 
               <Link
+                to="/reports"
+                className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+              >
+                Reports
+              </Link>
+
+              <Link
                 to="/search"
                 className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium flex items-center"
               >
