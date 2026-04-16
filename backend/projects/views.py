@@ -1085,6 +1085,7 @@ class ReportConfigurationViewSet(viewsets.ModelViewSet):
     filterset_fields = ["report_type"]
     ordering_fields = ["name", "created_at", "updated_at"]
     ordering = ["-updated_at"]
+    pagination_class = None
 
     def get_serializer_class(self):
         """Return appropriate serializer based on action"""
@@ -1123,6 +1124,7 @@ class ReportViewSet(viewsets.ModelViewSet):
     search_fields = ["title", "description"]
     ordering_fields = ["title", "created_at", "generated_at"]
     ordering = ["-created_at"]
+    pagination_class = None
 
     def get_serializer_class(self):
         """Return appropriate serializer based on action"""
